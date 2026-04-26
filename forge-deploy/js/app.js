@@ -741,6 +741,40 @@ const ROUTINES = [
       { exerciseId: 'shoulder-rolls', duration: 30 },
       { exerciseId: 'jumping-jacks', duration: 45 }
     ]
+  },
+  {
+    id: 'mobility',
+    name: 'Mobility & Flow',
+    icon: '🧘',
+    description: 'Stretch and breathe',
+    steps: [
+      { exerciseId: 'cat-cow', duration: 30 },
+      { exerciseId: 'world-greatest', duration: 30 },
+      { exerciseId: 'inchworm', reps: 8 },
+      { exerciseId: 'bird-dog', reps: 10 },
+      { exerciseId: 'cobra-stretch', duration: 30 },
+      { exerciseId: 'child-pose', duration: 30 },
+      { exerciseId: 'forward-fold', duration: 30 },
+      { exerciseId: 'shoulder-rolls', duration: 30 },
+      { exerciseId: 'arm-circles', duration: 30 }
+    ]
+  },
+  {
+    id: 'strong-start',
+    name: 'Strong Start',
+    icon: '💪',
+    description: 'Active wake-up',
+    steps: [
+      { exerciseId: 'cat-cow', duration: 30 },
+      { exerciseId: 'banded-walk', reps: 12 },
+      { exerciseId: 'bw-squat', reps: 15 },
+      { exerciseId: 'pull-apart', reps: 15 },
+      { exerciseId: 'pushup', reps: 10 },
+      { exerciseId: 'dead-bug', reps: 10 },
+      { exerciseId: 'bird-dog', reps: 10 },
+      { exerciseId: 'plank', duration: 30 },
+      { exerciseId: 'jumping-jacks', duration: 45 }
+    ]
   }
 ];
 

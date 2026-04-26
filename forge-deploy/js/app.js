@@ -1432,16 +1432,16 @@ function renderExerciseLibrary() {
           <div class="eyebrow">Library</div>
           <div style="font-family:var(--font-display);font-size:24px;">Exercises</div>
         </div>
-        <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted);">${EXERCISES.length} ex.</div>
+        <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted);">${EXERCISES.filter(e => e.category !== 'mobility').length} ex.</div>
       </div>
 
       <input type="text" placeholder="Search exercise..." value="${search}"
              oninput="window._exerciseSearch = this.value; renderExerciseLibrary()"
              style="margin-bottom:16px;">
 
-      <div class="scroll-x">
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
         ${allMuscles.map(m => `
-          <button class="pill ${activeFilter === m ? 'active' : ''}" style="flex-shrink:0;cursor:pointer;border:none;"
+          <button class="pill ${activeFilter === m ? 'active' : ''}" style="cursor:pointer;border:none;"
                   onclick="window._exerciseFilter='${m}';renderExerciseLibrary()">
             ${m === 'all' ? 'All' : MUSCLE_NAMES[m]}
           </button>

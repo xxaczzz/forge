@@ -75,12 +75,48 @@
 
 <script src="/js/app.js"></script>
 <script>
-  // PWA Service Worker registration
+  // PWA Service Worker registration with auto-update
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('/sw.js')
-        .then(reg => console.log('[FORGE] Service Worker registered:', reg.scope))
+        .then(reg => {
+          console.log('[FORGE] SW registered:', reg.scope);
+
+          // Проверяем обновления каждый раз при возврате на страницу
+          reg.update();
+
+          // Если найдена новая версия SW — она будет в reg.installing
+          reg.addEventListener('updatefound', () => {
+            const newWorker = reg.installing;
+            if (!newWorker) return;
+
+            newWorker.addEventListener('statechange', () => {
+              // Когда новая версия установилась и активна (есть старая) — нужно перезагрузить
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                console.log('[FORGE] New version installed. Reloading...');
+                // Командуем новому SW активироваться немедленно
+                newWorker.postMessage({ type: 'SKIP_WAITING' });
+              }
+            });
+          });
+        })
         .catch(err => console.warn('[FORGE] SW registration failed:', err));
+
+      // Когда контроллер сменился (новый SW взял управление) — перезагружаем страницу
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (refreshing) return;
+        refreshing = true;
+        console.log('[FORGE] Controller changed, reloading');
+        window.location.reload();
+      });
+
+      // Каждые 60 сек проверяем обновления (актуально для PWA, открытого днями)
+      setInterval(() => {
+        navigator.serviceWorker.getRegistration().then(reg => {
+          if (reg) reg.update();
+        });
+      }, 60000);
     });
   }
 </script>

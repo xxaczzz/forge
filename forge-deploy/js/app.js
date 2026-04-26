@@ -1813,16 +1813,24 @@ function workoutSilhouetteSVG(muscles) {
         <!-- шея -->
         <rect x="36" y="22" width="8" height="5" fill="${skin}"/>
 
-        <!-- Спина — вся верхняя часть торса -->
-        <path d="M28 32 L52 32 L53 76 L27 76 Z" fill="${c('back')}" stroke="${stroke}" stroke-width="0.8"/>
-        <!-- центральная линия позвоночника + разделение лопаток -->
+        <!-- СПИНА: 4 зоны (трапеции, верх, широчайшие, поясница) -->
+        <!-- Трапеции: трапециевидный сегмент от шеи к лопаткам -->
+        <path d="M30 32 L50 32 L48 44 L32 44 Z" fill="${c('back')}" stroke="${stroke}" stroke-width="0.8"/>
+        <!-- Верх спины (между лопатками): прямоугольная зона -->
+        <path d="M32 44 L48 44 L48 56 L32 56 Z" fill="${c('back')}" stroke="${stroke}" stroke-width="0.8"/>
+        <!-- Широчайшие: V-образная зона расширяется к талии -->
+        <path d="M32 56 L48 56 L51 70 L29 70 Z" fill="${c('back')}" stroke="${stroke}" stroke-width="0.8"/>
+        <!-- Поясница: нижний прямоугольник -->
+        <path d="M29 70 L51 70 L52 76 L28 76 Z" fill="${c('back')}" stroke="${stroke}" stroke-width="0.8"/>
+        <!-- Центральная линия позвоночника (всегда видна для анатомичности) -->
+        <line x1="40" y1="32" x2="40" y2="76" stroke="rgba(0,0,0,0.45)" stroke-width="0.7"/>
+        <!-- Дополнительные детали лопаток (если активна) -->
         ${set.has('back') ? `
-          <line x1="40" y1="32" x2="40" y2="74" stroke="rgba(0,0,0,0.4)" stroke-width="1"/>
-          <path d="M30 40 Q35 50 40 50" stroke="rgba(0,0,0,0.3)" stroke-width="0.8" fill="none"/>
-          <path d="M50 40 Q45 50 40 50" stroke="rgba(0,0,0,0.3)" stroke-width="0.8" fill="none"/>
+          <path d="M33 46 Q36 51 39 50" stroke="rgba(0,0,0,0.3)" stroke-width="0.7" fill="none"/>
+          <path d="M47 46 Q44 51 41 50" stroke="rgba(0,0,0,0.3)" stroke-width="0.7" fill="none"/>
         ` : ''}
 
-        <!-- Плечи (трапеции) — поверх верха спины -->
+        <!-- Плечи (трапеции боковые) — поверх верха спины -->
         <ellipse cx="22" cy="36" rx="8" ry="7" fill="${c('shoulders')}" stroke="${stroke}" stroke-width="0.8"/>
         <ellipse cx="58" cy="36" rx="8" ry="7" fill="${c('shoulders')}" stroke="${stroke}" stroke-width="0.8"/>
 
@@ -2495,23 +2503,55 @@ function drawWorkoutSilhouette(ctx, muscles, cx, ty, h, COLORS) {
       });
     } else {
       // ВИД СЗАДИ
-      // Спина (под плечами)
+      // СПИНА: 4 зоны (трапеции, верх, широчайшие, поясница)
+      // Трапеции
       drawShape(c('back'), () => {
-        ctx.moveTo(sx(28), sy(32));
-        ctx.lineTo(sx(52), sy(32));
-        ctx.lineTo(sx(53), sy(76));
-        ctx.lineTo(sx(27), sy(76));
+        ctx.moveTo(sx(30), sy(32));
+        ctx.lineTo(sx(50), sy(32));
+        ctx.lineTo(sx(48), sy(44));
+        ctx.lineTo(sx(32), sy(44));
       });
+      // Верх спины
+      drawShape(c('back'), () => {
+        ctx.moveTo(sx(32), sy(44));
+        ctx.lineTo(sx(48), sy(44));
+        ctx.lineTo(sx(48), sy(56));
+        ctx.lineTo(sx(32), sy(56));
+      });
+      // Широчайшие (V-форма)
+      drawShape(c('back'), () => {
+        ctx.moveTo(sx(32), sy(56));
+        ctx.lineTo(sx(48), sy(56));
+        ctx.lineTo(sx(51), sy(70));
+        ctx.lineTo(sx(29), sy(70));
+      });
+      // Поясница
+      drawShape(c('back'), () => {
+        ctx.moveTo(sx(29), sy(70));
+        ctx.lineTo(sx(51), sy(70));
+        ctx.lineTo(sx(52), sy(76));
+        ctx.lineTo(sx(28), sy(76));
+      });
+      // Центральная линия позвоночника (всегда видна)
+      ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(sx(40), sy(32));
+      ctx.lineTo(sx(40), sy(76));
+      ctx.stroke();
+      // Дуги лопаток только если активна
       if (set.has('back')) {
-        ctx.strokeStyle = 'rgba(0,0,0,0.5)';
-        ctx.lineWidth = 1.8;
+        ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+        ctx.lineWidth = 1.2;
         ctx.beginPath();
-        ctx.moveTo(sx(40), sy(32));
-        ctx.lineTo(sx(40), sy(74));
+        ctx.moveTo(sx(33), sy(46));
+        ctx.quadraticCurveTo(sx(36), sy(51), sx(39), sy(50));
+        ctx.moveTo(sx(47), sy(46));
+        ctx.quadraticCurveTo(sx(44), sy(51), sx(41), sy(50));
         ctx.stroke();
-        ctx.strokeStyle = COLORS.borderStrong;
-        ctx.lineWidth = 1.5;
       }
+      ctx.strokeStyle = COLORS.borderStrong;
+      ctx.lineWidth = 1.5;
 
       // Плечи (поверх спины)
       drawEllipse(c('shoulders'), sx(22), sy(36), (sx(30) - sx(14)) / 2, (sy(43) - sy(29)) / 2);

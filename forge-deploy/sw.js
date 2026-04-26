@@ -1,13 +1,19 @@
 /**
  * FORGE Service Worker
- * Стратегия: Cache First для статики, Network First для остального
+ *
+ * Стратегии кэширования:
+ * - HTML (navigation): Network First (всегда свежий, кэш как fallback при оффлайне)
+ * - JS / CSS: Network First (важно получить актуальную версию)
+ * - Images / fonts: Stale-While-Revalidate (быстро отдаём кэш + обновляем в фоне)
+ *
+ * Версия билда обновляется при каждом деплое — старый кэш автоматически удаляется.
  */
 
-const VERSION = 'forge-v1.0.0';
-const STATIC_CACHE = `${VERSION}-static`;
-const RUNTIME_CACHE = `${VERSION}-runtime`;
+// Версия билда — меняется при каждом релизе
+const BUILD_VERSION = '2026-04-26-1700';
+const CACHE_NAME = `forge-${BUILD_VERSION}`;
 
-// Файлы которые кэшируем сразу при установке
+// Файлы для предкэша при установке
 const PRECACHE_URLS = [
   '/',
   '/index.html',
@@ -19,83 +25,115 @@ const PRECACHE_URLS = [
   '/assets/icons/icon-512.png'
 ];
 
-// Установка — кэшируем основные файлы
+// Установка нового SW — кэшируем основные файлы и сразу активируемся
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(STATIC_CACHE)
+    caches.open(CACHE_NAME)
       .then((cache) => cache.addAll(PRECACHE_URLS))
-      .then(() => self.skipWaiting())
+      .then(() => self.skipWaiting()) // не ждём — активируемся немедленно
   );
 });
 
-// Активация — удаляем старые кэши
+// Активация — удаляем ВСЕ старые кэши (от других версий)
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys
-          .filter((key) => !key.startsWith(VERSION))
-          .map((key) => caches.delete(key))
-      );
-    }).then(() => self.clients.claim())
+    Promise.all([
+      caches.keys().then((keys) =>
+        Promise.all(
+          keys
+            .filter((key) => key !== CACHE_NAME)
+            .map((key) => caches.delete(key))
+        )
+      ),
+      self.clients.claim()
+    ])
   );
 });
 
-// Стратегия запросов
+// Хелпер: Network First с fallback на кэш
+async function networkFirst(request) {
+  try {
+    const networkResponse = await fetch(request);
+    if (networkResponse && networkResponse.status === 200) {
+      const cache = await caches.open(CACHE_NAME);
+      cache.put(request, networkResponse.clone());
+    }
+    return networkResponse;
+  } catch (err) {
+    const cached = await caches.match(request);
+    if (cached) return cached;
+    if (request.mode === 'navigate') {
+      const fallback = await caches.match('/index.html');
+      if (fallback) return fallback;
+    }
+    throw err;
+  }
+}
+
+// Хелпер: Stale-While-Revalidate (отдаём кэш, обновляем в фоне)
+async function staleWhileRevalidate(request) {
+  const cache = await caches.open(CACHE_NAME);
+  const cached = await cache.match(request);
+
+  const fetchPromise = fetch(request).then((response) => {
+    if (response && response.status === 200) {
+      cache.put(request, response.clone());
+    }
+    return response;
+  }).catch(() => cached);
+
+  return cached || fetchPromise;
+}
+
+// Маршрутизация запросов
 self.addEventListener('fetch', (event) => {
   const { request } = event;
 
-  // Игнорируем не-GET запросы
   if (request.method !== 'GET') return;
 
   const url = new URL(request.url);
 
-  // YouTube embed и Google Fonts — Network only (нужны свежие)
+  // YouTube / Google Fonts — Network only (не кэшируем)
   if (url.hostname.includes('youtube') ||
       url.hostname.includes('googleapis') ||
-      url.hostname.includes('gstatic')) {
+      url.hostname.includes('gstatic') ||
+      url.hostname.includes('img.youtube.com')) {
     return;
   }
 
-  // Для своих ресурсов — Cache First, потом Network
-  if (url.origin === location.origin) {
-    event.respondWith(
-      caches.match(request).then((cached) => {
-        if (cached) {
-          // Обновляем кэш в фоне
-          fetch(request).then((response) => {
-            if (response && response.status === 200) {
-              caches.open(RUNTIME_CACHE).then((cache) => {
-                cache.put(request, response.clone());
-              });
-            }
-          }).catch(() => {});
-          return cached;
-        }
+  // Свой домен — применяем стратегии
+  if (url.origin === self.location.origin) {
+    // HTML / JS / CSS / JSON / навигация → Network First
+    if (request.mode === 'navigate' ||
+        url.pathname.endsWith('.html') ||
+        url.pathname.endsWith('.js') ||
+        url.pathname.endsWith('.css') ||
+        url.pathname.endsWith('.json') ||
+        url.pathname === '/') {
+      event.respondWith(networkFirst(request));
+      return;
+    }
 
-        return fetch(request).then((response) => {
-          if (!response || response.status !== 200 || response.type !== 'basic') {
-            return response;
-          }
-          const responseToCache = response.clone();
-          caches.open(RUNTIME_CACHE).then((cache) => {
-            cache.put(request, responseToCache);
-          });
-          return response;
-        }).catch(() => {
-          // Офлайн фоллбэк для навигации
-          if (request.mode === 'navigate') {
-            return caches.match('/index.html');
-          }
-        });
-      })
-    );
+    // Изображения / иконки / шрифты → Stale-While-Revalidate
+    if (url.pathname.match(/\.(png|jpg|jpeg|svg|webp|woff2?|ttf)$/i) ||
+        url.pathname.startsWith('/assets/')) {
+      event.respondWith(staleWhileRevalidate(request));
+      return;
+    }
+
+    // Всё остальное — Network First
+    event.respondWith(networkFirst(request));
   }
 });
 
-// Обработка сообщений (для будущих обновлений)
+// Слушаем команды от страницы
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
+  if (event.data && event.data.type === 'GET_VERSION') {
+    event.ports[0].postMessage({ version: BUILD_VERSION });
+  }
 });
+
+console.log(`[FORGE SW] Loaded version: ${BUILD_VERSION}`);

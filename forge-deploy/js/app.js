@@ -381,7 +381,12 @@ const STATE = {
   timer: null,
   lastBackup: 0,           // timestamp последнего экспорта
   storagePersistent: false, // дал ли браузер persistent storage
-  workoutsSinceBackup: 0    // счётчик тренировок с последнего бэкапа
+  workoutsSinceBackup: 0,    // счётчик тренировок с последнего бэкапа
+  // ===== MORNING ROUTINE (полностью изолировано от силовой логики) =====
+  routines: [],            // история выполненных зарядок
+  morningStreak: 0,        // счётчик дней подряд
+  morningLastDate: null,   // YYYY-MM-DD последней зарядки
+  currentRoutine: null     // активная зарядка (state машина плеера)
 };
 
 function save() {
@@ -390,7 +395,11 @@ function save() {
       profile: STATE.profile,
       history: STATE.history,
       lastBackup: STATE.lastBackup,
-      workoutsSinceBackup: STATE.workoutsSinceBackup
+      workoutsSinceBackup: STATE.workoutsSinceBackup,
+      // morning data (изолировано)
+      routines: STATE.routines,
+      morningStreak: STATE.morningStreak,
+      morningLastDate: STATE.morningLastDate
     }));
   } catch(e) {
     console.error(e);
@@ -410,6 +419,10 @@ function load() {
       STATE.history = d.history || [];
       STATE.lastBackup = d.lastBackup || 0;
       STATE.workoutsSinceBackup = d.workoutsSinceBackup || 0;
+      // morning data — старые бэкапы могут не иметь этих полей, дефолтим
+      STATE.routines = d.routines || [];
+      STATE.morningStreak = d.morningStreak || 0;
+      STATE.morningLastDate = d.morningLastDate || null;
     }
   } catch(e) { console.error(e); }
 }
@@ -707,6 +720,46 @@ function muscleBodySVG(fatigue) {
       </svg>
     </div>
   `;
+}
+
+// ============== MORNING ROUTINES (программы зарядки) ==============
+// Каждая программа — массив шагов, каждый шаг ссылается на упражнение из EXERCISES
+// duration — секунды для timed упражнений, reps — для повторов
+// Между шагами автоматически добавляется "Get ready" пауза
+const ROUTINE_GET_READY_SEC = 15;
+
+const ROUTINES = [
+  {
+    id: 'energizer',
+    name: 'Energizer',
+    icon: '⚡',
+    description: 'Quick wake-up',
+    steps: [
+      { exerciseId: 'arm-circles', duration: 30 },
+      { exerciseId: 'cat-cow', duration: 30 },
+      { exerciseId: 'bw-squat', reps: 10 },
+      { exerciseId: 'shoulder-rolls', duration: 30 },
+      { exerciseId: 'jumping-jacks', duration: 45 }
+    ]
+  }
+];
+
+// Расчёт общей длительности программы в секундах
+function routineDurationSec(routine) {
+  // Каждый шаг + пауза между шагами (кроме после последнего)
+  let total = 0;
+  routine.steps.forEach((step, i) => {
+    // Для повторов считаем ~3 сек/повтор как примерную оценку
+    const stepSec = step.duration || (step.reps * 3);
+    total += stepSec;
+    if (i < routine.steps.length - 1) total += ROUTINE_GET_READY_SEC;
+  });
+  return total;
+}
+
+// Получить определение упражнения для шага зарядки
+function routineStepExercise(step) {
+  return EXERCISES.find(e => e.id === step.exerciseId);
 }
 
 // ============== ONBOARDING ==============
@@ -1618,6 +1671,501 @@ function addExerciseToWorkout(exId) {
   });
   if (STATE.view === 'workout') renderWorkout();
   else { STATE.view = 'workout'; renderApp(); }
+}
+
+// ============== MORNING ROUTINE: SCREENS ==============
+
+// Утилита для звукового сигнала + вибрации (используется и в силовых, и в зарядке)
+function playTimerEndSignal() {
+  if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+  try {
+    const audio = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQ==');
+    audio.play();
+  } catch(e) {}
+}
+
+// Получает 'YYYY-MM-DD' для даты в локали
+function dateKey(d) {
+  d = d || new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+// Пересчёт стрика после новой зарядки
+function updateMorningStreakAfterRoutine() {
+  const today = dateKey();
+  if (STATE.morningLastDate === today) {
+    // уже была сегодня — не увеличиваем стрик повторно
+    return;
+  }
+  // Проверяем была ли вчера зарядка
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayKey = dateKey(yesterday);
+  if (STATE.morningLastDate === yesterdayKey) {
+    STATE.morningStreak = (STATE.morningStreak || 0) + 1;
+  } else {
+    // прервалась цепочка — начинаем с 1
+    STATE.morningStreak = 1;
+  }
+  STATE.morningLastDate = today;
+}
+
+// Главный экран Morning
+function renderMorningHome() {
+  const todayKey = dateKey();
+  const doneToday = STATE.morningLastDate === todayKey;
+  const recent = (STATE.routines || []).slice(-5).reverse();
+
+  render(`
+    <div class="screen">
+      <div class="header">
+        <div>
+          <div class="eyebrow">🌅 Morning</div>
+          <div style="font-family:var(--font-display);font-size:24px;">Wake up</div>
+        </div>
+      </div>
+
+      ${STATE.morningStreak > 0 ? `
+        <div style="background:var(--bg-elev);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;display:flex;align-items:center;gap:12px;">
+          <div style="font-size:32px;">🔥</div>
+          <div style="flex:1;">
+            <div style="font-family:var(--font-display);font-size:24px;color:var(--accent);">${STATE.morningStreak}</div>
+            <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.1em;">${STATE.morningStreak === 1 ? 'day' : 'days'} in a row</div>
+          </div>
+          ${doneToday ? `<div style="font-size:11px;color:var(--accent);font-family:var(--font-mono);">✓ DONE TODAY</div>` : ''}
+        </div>
+      ` : ''}
+
+      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">Choose a routine</div>
+
+      ${ROUTINES.map(routine => {
+        const totalSec = routineDurationSec(routine);
+        const min = Math.ceil(totalSec / 60);
+        return `
+          <button class="exercise-card" style="width:100%;text-align:left;cursor:pointer;border:none;margin-bottom:12px;"
+                  onclick="openRoutinePreview('${routine.id}')">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <div style="font-size:28px;">${routine.icon}</div>
+              <div style="flex:1;">
+                <div style="font-family:var(--font-display);font-size:18px;">${routine.name}</div>
+                <div style="font-size:12px;color:var(--text-dim);">${routine.description}</div>
+                <div style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono);margin-top:4px;">
+                  ${routine.steps.length} exercises • ~${min} min
+                </div>
+              </div>
+              <div style="color:var(--text-muted);">›</div>
+            </div>
+          </button>
+        `;
+      }).join('')}
+
+      ${recent.length > 0 ? `
+        <div style="margin-top:24px;">
+          <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">Recent</div>
+          ${recent.map(r => {
+            const routine = ROUTINES.find(x => x.id === r.programId);
+            const date = new Date(r.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            const min = Math.round(r.duration / 60);
+            return `
+              <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;">
+                <span style="color:var(--text-dim);">${date.toUpperCase()}</span>
+                <span>${routine ? routine.icon + ' ' + routine.name : 'Routine'}</span>
+                <span style="color:var(--text-muted);font-family:var(--font-mono);">${min}m</span>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      ` : ''}
+    </div>
+  `);
+}
+
+// Превью программы
+function renderRoutinePreview() {
+  const routineId = window._routineId;
+  const routine = ROUTINES.find(r => r.id === routineId);
+  if (!routine) {
+    STATE.view = 'morning';
+    renderApp();
+    return;
+  }
+  const totalSec = routineDurationSec(routine);
+  const min = Math.ceil(totalSec / 60);
+
+  render(`
+    <div class="screen">
+      <div class="header" style="margin-bottom:16px;">
+        <button class="btn btn-secondary" style="padding:8px 12px;font-size:13px;" onclick="STATE.view='morning';renderApp()">← Back</button>
+      </div>
+
+      <div style="text-align:center;margin-bottom:24px;">
+        <div style="font-size:48px;margin-bottom:8px;">${routine.icon}</div>
+        <div style="font-family:var(--font-display);font-size:32px;">${routine.name}</div>
+        <div style="color:var(--text-dim);margin-top:4px;">${routine.description}</div>
+        <div style="font-size:12px;color:var(--text-muted);font-family:var(--font-mono);margin-top:8px;">
+          ${routine.steps.length} exercises • ~${min} min
+        </div>
+      </div>
+
+      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">Exercises</div>
+
+      ${routine.steps.map((step, i) => {
+        const ex = routineStepExercise(step);
+        if (!ex) return '';
+        const detail = step.duration
+          ? `${step.duration}s`
+          : `×${step.reps}`;
+        return `
+          <div class="exercise-card" style="margin-bottom:8px;">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <div style="width:36px;height:36px;border-radius:8px;background:var(--bg-elev-3);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:14px;color:var(--accent);">
+                ${i + 1}
+              </div>
+              <div style="flex:1;">
+                <div style="font-weight:600;">${ex.name}</div>
+              </div>
+              <div style="font-family:var(--font-mono);font-size:13px;color:var(--text-dim);">${detail}</div>
+            </div>
+          </div>
+        `;
+      }).join('')}
+
+      <button class="btn btn-primary" style="width:100%;margin-top:24px;" onclick="startRoutine('${routine.id}')">
+        START ROUTINE →
+      </button>
+    </div>
+  `);
+}
+
+// Открытие превью из главного
+function openRoutinePreview(routineId) {
+  window._routineId = routineId;
+  STATE.view = 'routine-preview';
+  renderApp();
+}
+
+// Запуск зарядки
+function startRoutine(routineId) {
+  const routine = ROUTINES.find(r => r.id === routineId);
+  if (!routine) return;
+  STATE.currentRoutine = {
+    routineId: routine.id,
+    stepIndex: 0,           // текущий шаг
+    phase: 'exercise',      // 'exercise' | 'rest'
+    timeLeft: routine.steps[0].duration || null,  // null для упражнений с повторами
+    totalSteps: routine.steps.length,
+    startedAt: Date.now(),
+    paused: false,
+    interval: null
+  };
+  STATE.view = 'routine-player';
+  renderApp();
+  // Запускаем таймер если timed-упражнение
+  if (STATE.currentRoutine.timeLeft) {
+    startRoutineTimer();
+  }
+}
+
+// Тикалка таймера зарядки
+function startRoutineTimer() {
+  const r = STATE.currentRoutine;
+  if (!r) return;
+  if (r.interval) clearInterval(r.interval);
+  r.interval = setInterval(() => {
+    if (r.paused) return;
+    r.timeLeft -= 1;
+    updateRoutinePlayerTimer();
+    if (r.timeLeft <= 0) {
+      clearInterval(r.interval);
+      r.interval = null;
+      playTimerEndSignal();
+      // Автопереход к следующему шагу
+      routineNextStep();
+    }
+  }, 1000);
+}
+
+// Обновляет только таймер на экране (без полного ререндера)
+function updateRoutinePlayerTimer() {
+  const r = STATE.currentRoutine;
+  if (!r) return;
+  const el = document.getElementById('routine-timer-value');
+  if (el) {
+    el.textContent = r.timeLeft !== null ? r.timeLeft : '—';
+  }
+  // Прогрессбар таймера
+  const ring = document.getElementById('routine-timer-ring');
+  if (ring && r.timeLeft !== null) {
+    const routine = ROUTINES.find(x => x.id === r.routineId);
+    const step = routine.steps[r.stepIndex];
+    const totalForStep = r.phase === 'rest' ? ROUTINE_GET_READY_SEC : (step.duration || 0);
+    if (totalForStep > 0) {
+      const fraction = r.timeLeft / totalForStep;
+      const C = 2 * Math.PI * 90; // circumference (radius 90)
+      ring.style.strokeDashoffset = C * (1 - fraction);
+    }
+  }
+}
+
+// Переход к следующему шагу или фаза отдыха
+function routineNextStep() {
+  const r = STATE.currentRoutine;
+  if (!r) return;
+  const routine = ROUTINES.find(x => x.id === r.routineId);
+  if (!routine) return;
+
+  if (r.phase === 'exercise') {
+    // После упражнения: либо отдых перед следующим, либо завершение
+    if (r.stepIndex >= routine.steps.length - 1) {
+      // Это было последнее упражнение → финиш
+      finishRoutine();
+      return;
+    }
+    // Иначе — фаза отдыха
+    r.phase = 'rest';
+    r.timeLeft = ROUTINE_GET_READY_SEC;
+    renderApp();
+    startRoutineTimer();
+  } else {
+    // После отдыха: следующее упражнение
+    r.stepIndex += 1;
+    r.phase = 'exercise';
+    const nextStep = routine.steps[r.stepIndex];
+    r.timeLeft = nextStep.duration || null;
+    renderApp();
+    if (r.timeLeft) startRoutineTimer();
+  }
+}
+
+// Завершение зарядки (после последнего шага или ручное)
+function finishRoutine() {
+  const r = STATE.currentRoutine;
+  if (!r) return;
+  const routine = ROUTINES.find(x => x.id === r.routineId);
+  if (r.interval) { clearInterval(r.interval); r.interval = null; }
+
+  const completedAt = Date.now();
+  const duration = Math.round((completedAt - r.startedAt) / 1000);
+
+  // Сохраняем в STATE.routines
+  const record = {
+    id: 'r-' + completedAt,
+    programId: r.routineId,
+    timestamp: completedAt,
+    duration: duration,
+    completedExercises: r.stepIndex + 1
+  };
+  STATE.routines = STATE.routines || [];
+  STATE.routines.push(record);
+
+  // Стрик
+  updateMorningStreakAfterRoutine();
+
+  // Сохраняем
+  save();
+
+  // Сводка
+  STATE.currentRoutine = null;
+  showRoutineSummary(record, routine);
+}
+
+// Прерывание (пользователь нажал Exit)
+function exitRoutine() {
+  if (!STATE.currentRoutine) return;
+  const r = STATE.currentRoutine;
+  if (r.interval) clearInterval(r.interval);
+  STATE.currentRoutine = null;
+  STATE.view = 'morning';
+  renderApp();
+  toast('Routine cancelled');
+}
+
+// Skip — переход вручную
+function skipRoutineStep() {
+  const r = STATE.currentRoutine;
+  if (!r) return;
+  if (r.interval) { clearInterval(r.interval); r.interval = null; }
+  routineNextStep();
+}
+
+// Кнопка "next" для упражнений с повторами (когда таймера нет)
+function manualNextStep() {
+  routineNextStep();
+}
+
+// Pause/Resume
+function toggleRoutinePause() {
+  const r = STATE.currentRoutine;
+  if (!r) return;
+  r.paused = !r.paused;
+  // Обновим только текст кнопки
+  const btn = document.getElementById('routine-pause-btn');
+  if (btn) btn.textContent = r.paused ? '▶' : '⏸';
+}
+
+// Плеер зарядки
+function renderRoutinePlayer() {
+  const r = STATE.currentRoutine;
+  if (!r) {
+    STATE.view = 'morning';
+    renderApp();
+    return;
+  }
+  const routine = ROUTINES.find(x => x.id === r.routineId);
+  if (!routine) {
+    exitRoutine();
+    return;
+  }
+
+  if (r.phase === 'rest') {
+    // Экран отдыха
+    const next = routine.steps[r.stepIndex + 1];
+    const nextEx = next ? routineStepExercise(next) : null;
+    render(`
+      <div class="screen" style="background:var(--bg);">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0 16px;">
+          <button class="btn btn-secondary" style="padding:6px 12px;font-size:12px;" onclick="exitRoutine()">✕ Exit</button>
+          <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted);">
+            STEP ${r.stepIndex + 2} OF ${r.totalSteps}
+          </div>
+        </div>
+
+        <div style="text-align:center;padding:32px 0;">
+          <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.15em;margin-bottom:8px;">Get ready</div>
+          <div style="font-family:var(--font-display);font-size:24px;color:var(--text-dim);margin-bottom:24px;">
+            ${nextEx ? 'Next: ' + nextEx.name : 'Next exercise'}
+          </div>
+
+          ${routineTimerCircle(r.timeLeft, ROUTINE_GET_READY_SEC)}
+
+          <div style="margin-top:32px;display:flex;gap:8px;justify-content:center;">
+            <button class="btn btn-secondary" id="routine-pause-btn" onclick="toggleRoutinePause()" style="min-width:60px;">⏸</button>
+            <button class="btn btn-primary" onclick="skipRoutineStep()">SKIP →</button>
+          </div>
+        </div>
+      </div>
+    `);
+    return;
+  }
+
+  // Экран упражнения
+  const step = routine.steps[r.stepIndex];
+  const ex = routineStepExercise(step);
+  if (!ex) {
+    exitRoutine();
+    return;
+  }
+
+  const isTimed = !!step.duration;
+
+  render(`
+    <div class="screen" style="background:var(--bg);">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0 16px;">
+        <button class="btn btn-secondary" style="padding:6px 12px;font-size:12px;" onclick="exitRoutine()">✕ Exit</button>
+        <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted);">
+          STEP ${r.stepIndex + 1} OF ${r.totalSteps}
+        </div>
+      </div>
+
+      <!-- Прогресс программы -->
+      <div style="height:4px;background:var(--bg-elev-2);border-radius:2px;margin-bottom:16px;overflow:hidden;">
+        <div style="height:100%;background:var(--accent);width:${((r.stepIndex) / r.totalSteps) * 100}%;transition:width 0.3s;"></div>
+      </div>
+
+      <div style="text-align:center;">
+        <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.15em;margin-bottom:6px;">${ex.muscle}</div>
+        <div style="font-family:var(--font-display);font-size:28px;margin-bottom:16px;">${ex.name}</div>
+
+        <!-- Видео -->
+        ${ex.video ? `
+          <div style="position:relative;width:100%;padding-bottom:56.25%;background:var(--bg-elev-2);border-radius:12px;overflow:hidden;margin-bottom:20px;">
+            <iframe src="https://www.youtube.com/embed/${ex.video}?autoplay=0&modestbranding=1&rel=0"
+                    style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"
+                    allow="accelerometer; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen></iframe>
+          </div>
+        ` : ''}
+
+        <!-- Таймер или повторы -->
+        ${isTimed
+          ? routineTimerCircle(r.timeLeft, step.duration)
+          : `
+            <div style="padding:24px 0;">
+              <div style="font-family:var(--font-display);font-size:64px;color:var(--accent);">×${step.reps}</div>
+              <div style="font-size:13px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.1em;">reps</div>
+            </div>
+          `
+        }
+
+        <!-- Описание -->
+        <div style="text-align:left;background:var(--bg-elev);border:1px solid var(--border);border-radius:10px;padding:12px;margin:16px 0;font-size:13px;color:var(--text-dim);line-height:1.5;">
+          ${ex.description}
+        </div>
+
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-secondary" id="routine-pause-btn" onclick="toggleRoutinePause()" style="min-width:60px;">⏸</button>
+          ${isTimed
+            ? `<button class="btn btn-secondary" style="flex:1;" onclick="skipRoutineStep()">SKIP →</button>`
+            : `<button class="btn btn-primary" style="flex:1;" onclick="manualNextStep()">DONE →</button>`
+          }
+        </div>
+      </div>
+    </div>
+  `);
+}
+
+// Круговой таймер с большим числом по центру
+function routineTimerCircle(timeLeft, totalSec) {
+  const C = 2 * Math.PI * 90;
+  const fraction = timeLeft / totalSec;
+  const offset = C * (1 - fraction);
+  return `
+    <div style="position:relative;width:200px;height:200px;margin:0 auto;">
+      <svg viewBox="0 0 200 200" style="width:100%;height:100%;transform:rotate(-90deg);">
+        <circle cx="100" cy="100" r="90" fill="none" stroke="var(--bg-elev-2)" stroke-width="8"/>
+        <circle id="routine-timer-ring" cx="100" cy="100" r="90" fill="none" stroke="var(--accent)" stroke-width="8"
+                stroke-dasharray="${C}" stroke-dashoffset="${offset}" stroke-linecap="round"
+                style="transition:stroke-dashoffset 1s linear;"/>
+      </svg>
+      <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;">
+        <div id="routine-timer-value" style="font-family:var(--font-display);font-size:56px;color:var(--accent);line-height:1;">${timeLeft !== null ? timeLeft : '—'}</div>
+        <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.15em;margin-top:4px;">seconds</div>
+      </div>
+    </div>
+  `;
+}
+
+// Сводка после зарядки
+function showRoutineSummary(record, routine) {
+  const min = Math.round(record.duration / 60);
+  const minDisplay = min < 1 ? '<1' : min;
+
+  openModal(`
+    <div style="text-align:center;">
+      <div style="font-size:48px;margin-bottom:8px;">${routine ? routine.icon : '🌅'}</div>
+      <div style="font-family:var(--font-display);font-size:28px;color:var(--accent);margin-bottom:4px;">DONE!</div>
+      <div style="color:var(--text-dim);margin-bottom:24px;">${routine ? routine.name : 'Routine'} — ${minDisplay} min</div>
+
+      ${STATE.morningStreak > 1 ? `
+        <div style="background:var(--bg-elev);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:24px;">
+          <div style="font-size:32px;">🔥</div>
+          <div style="font-family:var(--font-display);font-size:32px;color:var(--accent);">${STATE.morningStreak}</div>
+          <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.1em;">days in a row</div>
+        </div>
+      ` : `
+        <div style="background:var(--bg-elev);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:24px;">
+          <div style="font-size:32px;">🎉</div>
+          <div style="font-family:var(--font-display);font-size:18px;color:var(--accent);margin-top:4px;">First day done</div>
+          <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.1em;">come back tomorrow</div>
+        </div>
+      `}
+
+      <button class="btn btn-primary" style="width:100%;" onclick="closeModal();STATE.view='morning';renderApp()">DONE</button>
+    </div>
+  `);
 }
 
 
@@ -2981,8 +3529,11 @@ function exportData() {
   const data = JSON.stringify({
     profile: STATE.profile,
     history: STATE.history,
+    routines: STATE.routines || [],
+    morningStreak: STATE.morningStreak || 0,
+    morningLastDate: STATE.morningLastDate || null,
     exportedAt: new Date().toISOString(),
-    version: 1
+    version: 2
   }, null, 2);
   const blob = new Blob([data], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -3086,6 +3637,10 @@ function applyImport(data, mode) {
     }
     STATE.profile = data.profile || STATE.profile;
     STATE.history = data.history || [];
+    // morning data — поддержка backup v2 (если есть)
+    STATE.routines = data.routines || [];
+    STATE.morningStreak = data.morningStreak || 0;
+    STATE.morningLastDate = data.morningLastDate || null;
   } else if (mode === 'merge') {
     // Объединяем по дате — уникальность по timestamp
     const existing = new Set(STATE.history.map(w => w.date));
@@ -3093,6 +3648,17 @@ function applyImport(data, mode) {
     STATE.history = [...STATE.history, ...newWorkouts].sort((a, b) => a.date - b.date);
     if (!STATE.profile && data.profile) {
       STATE.profile = data.profile;
+    }
+    // morning data merge — по timestamp
+    if (data.routines && data.routines.length > 0) {
+      const existingRoutines = new Set((STATE.routines || []).map(r => r.timestamp));
+      const newRoutines = data.routines.filter(r => !existingRoutines.has(r.timestamp));
+      STATE.routines = [...(STATE.routines || []), ...newRoutines].sort((a, b) => a.timestamp - b.timestamp);
+    }
+    // streak восстанавливаем максимальным
+    if ((data.morningStreak || 0) > (STATE.morningStreak || 0)) {
+      STATE.morningStreak = data.morningStreak;
+      STATE.morningLastDate = data.morningLastDate;
     }
   }
 
@@ -3415,19 +3981,25 @@ function renderApp() {
     renderOnboarding();
     return;
   }
-  showNav(STATE.view !== 'workout');
+  // Скрываем нав на экранах: workout (силовая), routine-player (зарядка)
+  showNav(STATE.view !== 'workout' && STATE.view !== 'routine-player');
 
   switch (STATE.view) {
     case 'home': renderHome(); break;
     case 'workout': renderWorkout(); break;
     case 'exercises': renderExerciseLibrary(); break;
+    case 'morning': renderMorningHome(); break;
+    case 'routine-preview': renderRoutinePreview(); break;
+    case 'routine-player': renderRoutinePlayer(); break;
     case 'stats': renderStats(); break;
     default: renderHome();
   }
 
-  // Обновляем активную вкладку
+  // Обновляем активную вкладку: показываем Morning активным и для подэкранов routine-*
+  const activeTab = (STATE.view === 'routine-preview' || STATE.view === 'routine-player')
+    ? 'morning' : STATE.view;
   $$('.nav-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.tab === STATE.view);
+    btn.classList.toggle('active', btn.dataset.tab === activeTab);
   });
 }
 

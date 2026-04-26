@@ -1076,7 +1076,7 @@ function renderBackupBadge() {
       <span style="font-size:18px;">💾</span>
       <div style="flex:1;min-width:0;">
         <div style="font-size:13px;font-weight:600;">${text}</div>
-        <div style="font-size:11px;color:var(--text-dim);font-family:var(--font-mono);">Tap to download</div>
+        <div style="font-size:11px;color:var(--text-dim);font-family:var(--font-mono);">Tap to backup</div>
       </div>
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-muted);">
         <path d="M9 6l6 6-6 6"/>
@@ -3802,10 +3802,10 @@ async function openSettings() {
         </p>
         <div style="display:flex;gap:6px;">
           <button class="btn btn-secondary btn-sm" onclick="exportData()" style="flex:1;">
-            ⬇ Download
+            ⬇ Backup
           </button>
           <button class="btn btn-secondary btn-sm" onclick="importData()" style="flex:1;">
-            ⬆ Upload
+            ⬆ Restore
           </button>
         </div>
       </div>
@@ -4055,12 +4055,12 @@ function showBackupReminder(onContinue) {
     <h2 class="modal-title" style="text-align:center;">Save a backup</h2>
     <p style="color:var(--text-dim);font-size:14px;line-height:1.5;text-align:center;margin-bottom:20px;">
       ${isFirst
-        ? `You have ${STATE.history.length} ${STATE.history.length === 1 ? 'workout' : 'workouts'} saved. Download a backup so you don\'t lose progress when the browser cache is cleared.`
+        ? `You have ${STATE.history.length} ${STATE.history.length === 1 ? 'workout' : 'workouts'} saved. Save a backup so you don\'t lose progress when the browser cache is cleared.`
         : `${days} ${days === 1 ? 'day' : 'days'} since your last backup. Time for a fresh copy.`}
     </p>
 
     <button class="btn btn-primary btn-block btn-lg" onclick="exportData();closeModal();(${onContinue ? onContinue.toString() : 'function(){}'})()">
-      Download backup
+      Save backup
     </button>
     <button class="btn btn-ghost btn-block" style="margin-top:8px;" onclick="snoozeBackup();closeModal();(${onContinue ? onContinue.toString() : 'function(){}'})()">
       Remind me later

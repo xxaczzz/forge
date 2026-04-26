@@ -6,11 +6,15 @@
  * - JS / CSS: Network First (важно получить актуальную версию)
  * - Images / fonts: Stale-While-Revalidate (быстро отдаём кэш + обновляем в фоне)
  *
- * Версия билда обновляется при каждом деплое — старый кэш автоматически удаляется.
+ * Логика обновления:
+ * - Новый SW устанавливается в фоне, но НЕ активируется автоматически
+ * - Когда новый SW готов и ждёт — шлём клиенту сообщение SW_UPDATED
+ * - Клиент показывает плашку "Update available" с кнопкой UPDATE
+ * - По нажатию клиент шлёт SKIP_WAITING — SW активируется и страница перезагружается
  */
 
 // Версия билда — меняется при каждом релизе
-const BUILD_VERSION = '2026-04-26-2230';
+const BUILD_VERSION = '2026-04-26-2330';
 const CACHE_NAME = `forge-${BUILD_VERSION}`;
 
 // Файлы для предкэша при установке
@@ -25,12 +29,12 @@ const PRECACHE_URLS = [
   '/assets/icons/icon-512.png'
 ];
 
-// Установка нового SW — кэшируем основные файлы и сразу активируемся
+// Установка нового SW — кэшируем файлы. БЕЗ skipWaiting — ждём команды от клиента.
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => cache.addAll(PRECACHE_URLS))
-      .then(() => self.skipWaiting()) // не ждём — активируемся немедленно
+    // skipWaiting() убран — теперь ждём команды
   );
 });
 

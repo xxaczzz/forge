@@ -3813,7 +3813,31 @@ async function openSettings() {
 
     <button class="btn btn-ghost btn-block" onclick="resetAll()" style="color:var(--danger);margin-bottom:8px;">Reset everything</button>
     <button class="btn btn-primary btn-block" onclick="closeModal()">Done</button>
+
+    <div style="text-align:center;margin-top:16px;font-family:var(--font-mono);font-size:10px;color:var(--text-muted);letter-spacing:0.1em;">
+      FORGE · BUILD <span id="settings-version">loading...</span>
+    </div>
   `);
+
+  // Запрашиваем версию у Service Worker
+  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+    const channel = new MessageChannel();
+    channel.port1.onmessage = (event) => {
+      const versionEl = document.getElementById('settings-version');
+      if (versionEl && event.data && event.data.version) {
+        versionEl.textContent = event.data.version;
+      }
+    };
+    try {
+      navigator.serviceWorker.controller.postMessage({ type: 'GET_VERSION' }, [channel.port2]);
+    } catch(e) {
+      const versionEl = document.getElementById('settings-version');
+      if (versionEl) versionEl.textContent = 'unknown';
+    }
+  } else {
+    const versionEl = document.getElementById('settings-version');
+    if (versionEl) versionEl.textContent = 'no-sw';
+  }
 }
 
 async function enablePersistentStorage() {

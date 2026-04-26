@@ -1,0 +1,39 @@
+# ============================================
+# Cloudflare Pages — Headers Configuration
+# ============================================
+# Документация: https://developers.cloudflare.com/pages/configuration/headers/
+
+# Глобально для всех страниц — security headers
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: SAMEORIGIN
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), microphone=(), camera=()
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; frame-src https://www.youtube.com https://www.youtube-nocookie.com; media-src 'self' data:; connect-src 'self'
+
+# HTML — без долгого кеша, чтобы обновления приходили быстро
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+/
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Service Worker — никогда не кэшируем
+/sw.js
+  Cache-Control: public, max-age=0, must-revalidate
+  Service-Worker-Allowed: /
+
+# Манифест — короткий кэш
+/manifest.json
+  Cache-Control: public, max-age=3600
+
+# Статика (CSS/JS) — длинный кэш + revalidate
+/css/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/js/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Иконки и картинки — длинный кэш
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable

@@ -248,15 +248,15 @@ const EXERCISES = [
     description: 'Lie face down, hands by shoulders. Press chest up, arching gently, look forward.',
     tips: ['Hips stay on floor', 'Soft elbows', 'No pinching in lower back'] },
   { id: 'arm-circles', category: 'mobility', name: 'Arm Circles', muscle: 'shoulders',
-    equipment: [], video: '140RTNMciH8', isTime: true,
+    equipment: [], video: 'UVnP9YQ8YdM', isTime: true,
     description: 'Stand with arms extended to sides. Make small circles forward, then backward.',
     tips: ['Start small, get bigger', 'Both directions', 'Stay relaxed'] },
   { id: 'shoulder-rolls', category: 'mobility', name: 'Shoulder Rolls', muscle: 'shoulders',
-    equipment: [], video: 'fTafRXQzs2k', isTime: true,
+    equipment: [], video: 'KK6OFuKYxiI', isTime: true,
     description: 'Roll shoulders forward in big circles, then reverse and roll backward.',
     tips: ['Big, slow circles', 'Both directions', 'Relax neck'] },
   { id: 'jumping-jacks', category: 'mobility', name: 'Jumping Jacks', muscle: 'legs', secondary: ['shoulders', 'core'],
-    equipment: [], video: 'iSSAk4XCsRA', isTime: true,
+    equipment: [], video: 'c4DAnQ6DtF8', isTime: true,
     description: 'Jump while spreading legs and raising arms overhead, then return. Repeat at steady pace.',
     tips: ['Land softly on balls of feet', 'Steady rhythm', 'Engage core'] },
   { id: 'banded-walk', category: 'mobility', name: 'Banded Lateral Walk', muscle: 'legs',
@@ -1723,7 +1723,7 @@ function renderMorningHome() {
     <div class="screen">
       <div class="header">
         <div>
-          <div class="eyebrow">🌅 Morning</div>
+          <div class="eyebrow">Morning</div>
           <div style="font-family:var(--font-display);font-size:24px;">Wake up</div>
         </div>
       </div>
@@ -1745,12 +1745,12 @@ function renderMorningHome() {
         const totalSec = routineDurationSec(routine);
         const min = Math.ceil(totalSec / 60);
         return `
-          <button class="exercise-card" style="width:100%;text-align:left;cursor:pointer;border:none;margin-bottom:12px;"
-                  onclick="openRoutinePreview('${routine.id}')">
+          <button onclick="openRoutinePreview('${routine.id}')"
+                  style="width:100%;text-align:left;cursor:pointer;border:1px solid var(--border);background:var(--bg-elev);border-radius:14px;padding:16px;margin-bottom:12px;color:var(--text);font-family:inherit;">
             <div style="display:flex;align-items:center;gap:12px;">
               <div style="font-size:28px;">${routine.icon}</div>
               <div style="flex:1;">
-                <div style="font-family:var(--font-display);font-size:18px;">${routine.name}</div>
+                <div style="font-family:var(--font-display);font-size:18px;color:var(--text);">${routine.name}</div>
                 <div style="font-size:12px;color:var(--text-dim);">${routine.description}</div>
                 <div style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono);margin-top:4px;">
                   ${routine.steps.length} exercises • ~${min} min
@@ -1769,12 +1769,13 @@ function renderMorningHome() {
             const routine = ROUTINES.find(x => x.id === r.programId);
             const date = new Date(r.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
             const min = Math.round(r.duration / 60);
+            const minDisplay = min < 1 ? '<1m' : `${min}m`;
             return `
-              <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;">
+              <button onclick="openRoutineSummary('${r.id}')" style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:12px 8px;background:transparent;border:none;border-bottom:1px solid var(--border);font-size:13px;cursor:pointer;color:var(--text);font-family:inherit;">
                 <span style="color:var(--text-dim);">${date.toUpperCase()}</span>
                 <span>${routine ? routine.icon + ' ' + routine.name : 'Routine'}</span>
-                <span style="color:var(--text-muted);font-family:var(--font-mono);">${min}m</span>
-              </div>
+                <span style="color:var(--text-muted);font-family:var(--font-mono);">${minDisplay}</span>
+              </button>
             `;
           }).join('')}
         </div>
@@ -1819,7 +1820,7 @@ function renderRoutinePreview() {
           ? `${step.duration}s`
           : `×${step.reps}`;
         return `
-          <div class="exercise-card" style="margin-bottom:8px;">
+          <div style="background:var(--bg-elev);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:8px;">
             <div style="display:flex;align-items:center;gap:12px;">
               <div style="width:36px;height:36px;border-radius:8px;background:var(--bg-elev-3);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:14px;color:var(--accent);">
                 ${i + 1}
@@ -2142,6 +2143,8 @@ function routineTimerCircle(timeLeft, totalSec) {
 function showRoutineSummary(record, routine) {
   const min = Math.round(record.duration / 60);
   const minDisplay = min < 1 ? '<1' : min;
+  // Сохраняю id чтобы из onclick шеринга можно было его подцепить
+  window._lastRoutineRecord = record;
 
   openModal(`
     <div style="text-align:center;">
@@ -2163,7 +2166,54 @@ function showRoutineSummary(record, routine) {
         </div>
       `}
 
-      <button class="btn btn-primary" style="width:100%;" onclick="closeModal();STATE.view='morning';renderApp()">DONE</button>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-secondary" style="flex:1;" onclick="shareRoutine(window._lastRoutineRecord)">SHARE</button>
+        <button class="btn btn-primary" style="flex:1;" onclick="closeModal();STATE.view='morning';renderApp()">DONE</button>
+      </div>
+    </div>
+  `);
+}
+
+// Открыть сводку старой зарядки из Recent (с кнопкой Share)
+function openRoutineSummary(recordId) {
+  const record = (STATE.routines || []).find(r => r.id === recordId);
+  if (!record) return;
+  const routine = ROUTINES.find(r => r.id === record.programId);
+  const min = Math.round(record.duration / 60);
+  const minDisplay = min < 1 ? '<1' : min;
+  const dateStr = new Date(record.timestamp).toLocaleDateString('en-US', {
+    day: 'numeric', month: 'long', year: 'numeric'
+  });
+
+  window._lastRoutineRecord = record;
+
+  openModal(`
+    <div style="text-align:center;">
+      <div class="eyebrow" style="text-align:center;">${dateStr}</div>
+      <div style="font-size:48px;margin:8px 0;">${routine ? routine.icon : '🌅'}</div>
+      <div style="font-family:var(--font-display);font-size:24px;margin-bottom:4px;">${routine ? routine.name : 'Routine'}</div>
+      <div style="color:var(--text-dim);font-size:14px;margin-bottom:16px;">${minDisplay} min · ${record.completedExercises} exercises</div>
+
+      ${routine ? `
+        <div style="text-align:left;background:var(--bg-elev);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px;">
+          ${routine.steps.map((step, i) => {
+            const ex = routineStepExercise(step);
+            if (!ex) return '';
+            const detail = step.duration ? `${step.duration}s` : `×${step.reps}`;
+            return `
+              <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;${i < routine.steps.length - 1 ? 'border-bottom:1px solid var(--border);' : ''}">
+                <span style="color:var(--text);">${i + 1}. ${ex.name}</span>
+                <span style="color:var(--text-muted);font-family:var(--font-mono);">${detail}</span>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      ` : ''}
+
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-secondary" style="flex:1;" onclick="closeModal()">CLOSE</button>
+        <button class="btn btn-primary" style="flex:1;" onclick="shareRoutine(window._lastRoutineRecord)">SHARE</button>
+      </div>
     </div>
   `);
 }
@@ -3015,6 +3065,246 @@ async function renderWorkoutImage(w) {
 }
 
 // Хелпер: rounded rectangle path
+// ============== SHARE: ROUTINE (утренняя зарядка) ==============
+async function shareRoutine(routineRecord) {
+  if (!routineRecord) return;
+  toast('Preparing image...');
+
+  try {
+    const blob = await renderRoutineImage(routineRecord);
+
+    const routine = ROUTINES.find(r => r.id === routineRecord.programId);
+    const dateStr = new Date(routineRecord.timestamp).toLocaleDateString('en-US', {
+      day: 'numeric', month: 'long'
+    });
+    const min = Math.round(routineRecord.duration / 60);
+    const minDisplay = min < 1 ? '<1' : min;
+    const streakLine = STATE.morningStreak > 1 ? `\n🔥 ${STATE.morningStreak} day streak` : '';
+
+    const text = `🌅 Morning routine ${dateStr}\n${routine ? routine.name : 'Routine'} — ${minDisplay} min${streakLine}\n\nvia FORGE`;
+    const file = new File([blob], `forge-routine-${dateStr}.png`, { type: 'image/png' });
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: 'My morning routine', text: text });
+        return;
+      } catch(err) {
+        if (err.name === 'AbortError') return;
+        console.warn('Share with file failed, fallback:', err);
+      }
+    }
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'My morning routine', text: text });
+        return;
+      } catch(err) {
+        if (err.name === 'AbortError') return;
+      }
+    }
+
+    // Fallback десктоп: скачать + скопировать текст
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `forge-routine-${dateStr}.png`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      try {
+        await navigator.clipboard.writeText(text);
+        toast('Image saved, text copied');
+      } catch(e) {
+        toast('Image saved');
+      }
+    } else {
+      toast('Image saved');
+    }
+  } catch(err) {
+    console.error('shareRoutine failed:', err);
+    toast('Could not create image');
+  }
+}
+
+// Рендер картинки зарядки (1080×1350) — без силуэта, без YouTube превью
+async function renderRoutineImage(record) {
+  const routine = ROUTINES.find(r => r.id === record.programId);
+  if (!routine) throw new Error('Routine not found');
+
+  const W = 1080, H = 1350;
+  const canvas = document.createElement('canvas');
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  const COLORS = {
+    bg: '#0a0a0a',
+    bgElev: '#141414',
+    bgElev2: '#1c1c1c',
+    bgElev3: '#242424',
+    border: '#262626',
+    borderStrong: '#383838',
+    text: '#f5f5f5',
+    textDim: '#9a9a9a',
+    textMuted: '#5a5a5a',
+    accent: '#d4ff3a'
+  };
+
+  // Фон с градиентом
+  const grad = ctx.createLinearGradient(0, 0, W, H);
+  grad.addColorStop(0, COLORS.bgElev);
+  grad.addColorStop(1, COLORS.bg);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Glow в углу — оранжево-жёлтый (утро)
+  const glow = ctx.createRadialGradient(W * 0.85, H * 0.1, 0, W * 0.85, H * 0.1, 500);
+  glow.addColorStop(0, 'rgba(255, 200, 50, 0.20)');
+  glow.addColorStop(1, 'rgba(255, 200, 50, 0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, W, H);
+
+  const PAD = 60;
+  let y = 70;
+
+  // Логотип FORGE сверху-слева
+  ctx.fillStyle = COLORS.accent;
+  ctx.fillRect(PAD, y, 50, 50);
+  ctx.fillStyle = COLORS.bg;
+  ctx.fillRect(PAD + 18, y + 18, 14, 14);
+  ctx.fillStyle = COLORS.text;
+  ctx.font = 'bold 36px -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif';
+  ctx.textBaseline = 'top';
+  ctx.fillText('FORGE', PAD + 70, y + 8);
+
+  // Дата сверху-справа
+  const dateStr = new Date(record.timestamp).toLocaleDateString('en-US', {
+    month: 'short', day: 'numeric', year: 'numeric'
+  }).toUpperCase();
+  const min = Math.round(record.duration / 60);
+  const minDisplay = min < 1 ? '<1m' : `${min}M`;
+  ctx.font = '20px "SF Mono", Menlo, Monaco, monospace';
+  ctx.fillStyle = COLORS.textDim;
+  ctx.textAlign = 'right';
+  ctx.fillText(`${dateStr}  ·  ${minDisplay}`, W - PAD, y + 18);
+  ctx.textAlign = 'left';
+  y += 130;
+
+  // Большая иконка программы по центру
+  ctx.font = '120px "Apple Color Emoji", "Segoe UI Emoji", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.fillText(routine.icon, W / 2, y);
+  y += 150;
+
+  // Название программы + "MORNING ROUTINE"
+  ctx.fillStyle = COLORS.textDim;
+  ctx.font = '20px "SF Mono", Menlo, Monaco, monospace';
+  ctx.fillText('MORNING ROUTINE', W / 2, y);
+  y += 35;
+
+  ctx.fillStyle = COLORS.text;
+  ctx.font = 'bold 80px -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif';
+  ctx.fillText(routine.name.toUpperCase(), W / 2, y);
+  y += 100;
+
+  // Description
+  ctx.fillStyle = COLORS.textDim;
+  ctx.font = '28px -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif';
+  ctx.fillText(routine.description, W / 2, y);
+  y += 80;
+
+  // Stats row: длительность, упражнений, стрик
+  ctx.textAlign = 'left';
+  const cardW = (W - PAD * 2 - 30) / (STATE.morningStreak > 0 ? 3 : 2);
+  const statsY = y;
+
+  const drawStat = (i, label, value, valueColor) => {
+    const x = PAD + (cardW + 15) * i;
+    // Карточка
+    ctx.fillStyle = COLORS.bgElev2;
+    roundRect(ctx, x, statsY, cardW, 130, 16);
+    ctx.fill();
+    // Border
+    ctx.strokeStyle = COLORS.border;
+    ctx.lineWidth = 1;
+    roundRect(ctx, x, statsY, cardW, 130, 16);
+    ctx.stroke();
+    // Label
+    ctx.fillStyle = COLORS.textMuted;
+    ctx.font = '18px "SF Mono", Menlo, Monaco, monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText(label.toUpperCase(), x + 24, statsY + 22);
+    // Value
+    ctx.fillStyle = valueColor || COLORS.text;
+    ctx.font = 'bold 56px -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif';
+    ctx.fillText(value, x + 24, statsY + 56);
+  };
+
+  drawStat(0, 'Duration', minDisplay);
+  drawStat(1, 'Exercises', String(record.completedExercises));
+  if (STATE.morningStreak > 0) {
+    drawStat(2, 'Streak', `🔥${STATE.morningStreak}`, COLORS.accent);
+  }
+
+  y = statsY + 165;
+
+  // Список упражнений
+  ctx.fillStyle = COLORS.textMuted;
+  ctx.font = '20px "SF Mono", Menlo, Monaco, monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText('EXERCISES', PAD, y);
+  y += 35;
+
+  routine.steps.forEach((step, i) => {
+    const ex = routineStepExercise(step);
+    if (!ex) return;
+
+    // Карточка упражнения
+    ctx.fillStyle = COLORS.bgElev2;
+    roundRect(ctx, PAD, y, W - PAD * 2, 80, 14);
+    ctx.fill();
+
+    // Номер
+    ctx.fillStyle = COLORS.bgElev3;
+    roundRect(ctx, PAD + 16, y + 16, 48, 48, 10);
+    ctx.fill();
+    ctx.fillStyle = COLORS.accent;
+    ctx.font = 'bold 22px "SF Mono", Menlo, Monaco, monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(i + 1), PAD + 40, y + 40);
+
+    // Имя упражнения
+    ctx.fillStyle = COLORS.text;
+    ctx.font = 'bold 28px -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(ex.name, PAD + 80, y + 40);
+
+    // Detail (длительность или повторы) справа
+    const detail = step.duration ? `${step.duration}s` : `×${step.reps}`;
+    ctx.fillStyle = COLORS.textDim;
+    ctx.font = '24px "SF Mono", Menlo, Monaco, monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText(detail, W - PAD - 24, y + 40);
+
+    y += 88;
+  });
+
+  // Footer
+  ctx.fillStyle = COLORS.textMuted;
+  ctx.font = '20px "SF Mono", Menlo, Monaco, monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.fillText('FORGE — 100% FREE FOREVER', W / 2, H - 70);
+
+  // Готово — в blob
+  return new Promise(resolve => canvas.toBlob(resolve, 'image/png', 0.92));
+}
+
+
 function roundRect(ctx, x, y, w, h, r) {
   ctx.beginPath();
   ctx.moveTo(x + r, y);

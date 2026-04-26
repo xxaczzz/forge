@@ -1,0 +1,21 @@
+{
+  "name": "forge",
+  "version": "1.0.0",
+  "description": "Умный дневник тренировок — персональный фитнес-трекер",
+  "private": true,
+  "scripts": {
+    "dev": "npx wrangler pages dev . --port 8788",
+    "deploy": "npx wrangler pages deploy . --project-name=forge",
+    "preview": "npx http-server . -p 8000 -c-1"
+  },
+  "keywords": [
+    "fitness",
+    "workout",
+    "tracker",
+    "pwa"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}

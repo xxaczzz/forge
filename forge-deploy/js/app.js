@@ -8,180 +8,265 @@
 // video — YouTube ID для встроенного плеера с обучающим видео
 const EXERCISES = [
   // ===== CHEST =====
-  { id: 'bench-press', name: 'Barbell Bench Press', muscle: 'chest', secondary: ['triceps', 'shoulders'],
+  { id: 'bench-press', category: 'strength', name: 'Barbell Bench Press', muscle: 'chest', secondary: ['triceps', 'shoulders'],
     equipment: ['barbell', 'bench'], compound: true, video: 'rT7DgCr-3pg',
     description: 'Lie on the bench, lower the bar to the middle of your chest, press up. Shoulder blades retracted, feet planted firmly.',
     tips: ['Keep hips on the bench', 'Bar moves in a slight arc', 'Control the eccentric phase'] },
-  { id: 'db-bench', name: 'Dumbbell Bench Press', muscle: 'chest', secondary: ['triceps', 'shoulders'],
+  { id: 'db-bench', category: 'strength', name: 'Dumbbell Bench Press', muscle: 'chest', secondary: ['triceps', 'shoulders'],
     equipment: ['dumbbells', 'bench'], compound: true, video: 'YQ2s_Y7g5Qk',
     description: 'Lie on the bench with dumbbells. Lower them to chest level, press up and squeeze at the top.',
     tips: ['Greater range than barbell', 'Control at the bottom', 'Do not clang dumbbells together'] },
-  { id: 'incline-db-bench', name: 'Incline Dumbbell Press', muscle: 'chest', secondary: ['shoulders', 'triceps'],
+  { id: 'incline-db-bench', category: 'strength', name: 'Incline Dumbbell Press', muscle: 'chest', secondary: ['shoulders', 'triceps'],
     equipment: ['dumbbells', 'bench-incline'], compound: true, video: '8iPEnn-ltC8',
     description: 'Set bench at 30 degrees. Press dumbbells up, focusing on the upper chest.',
     tips: ['No more than 45 degrees or front delts take over', 'Squeeze at the top', 'Elbows below shoulder joint'] },
-  { id: 'pushup', bwFactor: 0.65, name: 'Push-Ups', muscle: 'chest', secondary: ['triceps', 'shoulders', 'core'],
+  { id: 'pushup', category: 'strength', bwFactor: 0.65, name: 'Push-Ups', muscle: 'chest', secondary: ['triceps', 'shoulders', 'core'],
     equipment: [], compound: true, video: 'IODxDxX7oi4',
     description: 'Plank position, lower until chest touches the floor, push back up. Body stays in a straight line.',
     tips: ['Elbows at 45-degree angle', 'Engage your core', 'Do not let hips sag'] },
-  { id: 'pushup-wide', bwFactor: 0.65, name: 'Wide Push-Ups', muscle: 'chest', secondary: ['shoulders'],
+  { id: 'pushup-wide', category: 'strength', bwFactor: 0.65, name: 'Wide Push-Ups', muscle: 'chest', secondary: ['shoulders'],
     equipment: [], video: 'XPPfnSEATJA',
     description: 'Push-ups with hands wider than shoulders. Shifts emphasis to chest, shorter range of motion.',
     tips: ['Avoid going too wide to protect shoulders', 'Chest to the floor', 'Body stays straight'] },
-  { id: 'db-fly', name: 'Dumbbell Fly', muscle: 'chest', secondary: ['shoulders'],
+  { id: 'db-fly', category: 'strength', name: 'Dumbbell Fly', muscle: 'chest', secondary: ['shoulders'],
     equipment: ['dumbbells', 'bench'], video: 'eozdVDA78K0',
     description: 'On a bench, open your arms with a slight bend in elbows, then bring dumbbells back together.',
     tips: ['Do not lower too deep', 'Feel the chest stretch', 'Light weight, clean form'] },
-  { id: 'band-press', name: 'Band Chest Press', muscle: 'chest', secondary: ['triceps'],
+  { id: 'band-press', category: 'strength', name: 'Band Chest Press', muscle: 'chest', secondary: ['triceps'],
     equipment: ['bands'], video: 'PJpnNakIDHk',
     description: 'Anchor the band behind you. Press forward from chest, like a bench press motion.',
     tips: ['Pick the right tension', 'Full squeeze at the end', 'Control the way back'] },
 
   // ===== BACK =====
-  { id: 'pullup', bwFactor: 0.95, name: 'Pull-Ups', muscle: 'back', secondary: ['biceps'],
+  { id: 'pullup', category: 'strength', bwFactor: 0.95, name: 'Pull-Ups', muscle: 'back', secondary: ['biceps'],
     equipment: ['pullup-bar'], compound: true, video: 'eGo4IYlbE5g',
     description: 'Hang from the bar, pull up until chin clears it, lower down. Grip slightly wider than shoulders.',
     tips: ['Squeeze shoulder blades', 'No swinging', 'Full range of motion'] },
-  { id: 'chin-up', bwFactor: 0.95, name: 'Chin-Ups', muscle: 'back', secondary: ['biceps'],
+  { id: 'chin-up', category: 'strength', bwFactor: 0.95, name: 'Chin-Ups', muscle: 'back', secondary: ['biceps'],
     equipment: ['pullup-bar'], compound: true, video: 'brhRXlOhsAM',
     description: 'Underhand grip, shoulder-width apart. More biceps engagement.',
     tips: ['Elbows tucked', 'Chin over the bar', 'Controlled negative'] },
-  { id: 'deadlift', name: 'Deadlift', muscle: 'back', secondary: ['legs', 'core'],
+  { id: 'deadlift', category: 'strength', name: 'Deadlift', muscle: 'back', secondary: ['legs', 'core'],
     equipment: ['barbell'], compound: true, video: 'r4MzxtBKyNE',
     description: 'Bar on the floor. Hinge at hips, grip slightly wider than hips, stand up with a flat back.',
     tips: ['Keep back flat throughout', 'Bar close to shins', 'Hips and chest rise together'] },
-  { id: 'bent-row', name: 'Bent-Over Row', muscle: 'back', secondary: ['biceps'],
+  { id: 'bent-row', category: 'strength', name: 'Bent-Over Row', muscle: 'back', secondary: ['biceps'],
     equipment: ['barbell'], compound: true, video: 'kBWAon7ItDw',
     description: 'Hinge forward with flat back, row the bar to your stomach, squeeze shoulder blades.',
     tips: ['Torso at about 45 degrees', 'Elbows go back', 'No body english'] },
-  { id: 'db-row', name: 'Single-Arm Dumbbell Row', muscle: 'back', secondary: ['biceps'],
+  { id: 'db-row', category: 'strength', name: 'Single-Arm Dumbbell Row', muscle: 'back', secondary: ['biceps'],
     equipment: ['dumbbells'], video: 'pYcpY20QaE8',
     description: 'Knee and hand on bench. Row the dumbbell to your hip, lower to a full stretch.',
     tips: ['Do not rotate the torso', 'Lead with the elbow', 'Pause at the top'] },
-  { id: 'band-row', name: 'Seated Band Row', muscle: 'back', secondary: ['biceps'],
+  { id: 'band-row', category: 'strength', name: 'Seated Band Row', muscle: 'back', secondary: ['biceps'],
     equipment: ['bands'], video: 'b1OJ7t0e2Tc',
     description: 'Sit on the floor, band looped around your feet. Row the handles to your stomach, squeeze blades.',
     tips: ['Flat back', 'Elbows close to body', 'Feel the squeeze between blades'] },
-  { id: 'inv-row', bwFactor: 0.6, name: 'Inverted Rows', muscle: 'back', secondary: ['biceps'],
+  { id: 'inv-row', category: 'strength', bwFactor: 0.6, name: 'Inverted Rows', muscle: 'back', secondary: ['biceps'],
     equipment: ['pullup-bar'], video: 'KOaCM1HMCWE',
     description: 'Under a low bar. Pull chest to bar, body straight as a plank.',
     tips: ['Lower body angle = harder', 'Squeeze blades', 'Body in a line'] },
-  { id: 'kb-swing', name: 'Kettlebell Swing', muscle: 'back', secondary: ['legs', 'core'],
+  { id: 'kb-swing', category: 'strength', name: 'Kettlebell Swing', muscle: 'back', secondary: ['legs', 'core'],
     equipment: ['kettlebell'], compound: true, video: 'YSxHifyI6s8',
     description: 'Swing the kettlebell from between knees to chest level using explosive hip drive.',
     tips: ['Power from hips, not arms', 'Flat back', 'Kettlebell is an extension of arms'] },
 
   // ===== LEGS =====
-  { id: 'squat', name: 'Barbell Back Squat', muscle: 'legs', secondary: ['core'],
+  { id: 'squat', category: 'strength', name: 'Barbell Back Squat', muscle: 'legs', secondary: ['core'],
     equipment: ['barbell'], compound: true, video: 'ultWZbUMPL8',
     description: 'Bar on shoulders. Squat until thighs are parallel to floor, drive up through heels.',
     tips: ['Knees track toes', 'Flat back', 'Big breath at the bottom'] },
-  { id: 'goblet-squat', name: 'Goblet Squat', muscle: 'legs', secondary: ['core'],
+  { id: 'goblet-squat', category: 'strength', name: 'Goblet Squat', muscle: 'legs', secondary: ['core'],
     equipment: ['dumbbells'], compound: true, video: 'MeIiIdhvXT4',
     description: 'Hold a dumbbell at chest with both hands. Squat deep, torso vertical.',
     tips: ['Elbows inside knees', 'Deep squat', 'Chest up'] },
-  { id: 'lunges', name: 'Dumbbell Lunges', muscle: 'legs', secondary: ['core'],
+  { id: 'lunges', category: 'strength', name: 'Dumbbell Lunges', muscle: 'legs', secondary: ['core'],
     equipment: ['dumbbells'], video: 'D7KaRcUTQeE',
     description: 'Holding dumbbells, step forward, lower until back knee touches floor, return.',
     tips: ['Front knee tracks over toes', 'Torso vertical', 'Take a long enough step'] },
-  { id: 'bw-squat', bwFactor: 0.7, name: 'Bodyweight Squat', muscle: 'legs', secondary: ['core'],
+  { id: 'bw-squat', category: 'strength', bwFactor: 0.7, name: 'Bodyweight Squat', muscle: 'legs', secondary: ['core'],
     equipment: [], video: 'aclHkVaku9U',
     description: 'Squat to thighs parallel, arms extended in front, keep heels planted.',
     tips: ['Hips back like sitting', 'Slow eccentric', 'Chest up'] },
-  { id: 'bw-lunges', bwFactor: 0.7, name: 'Bodyweight Lunges', muscle: 'legs', secondary: ['core'],
+  { id: 'bw-lunges', category: 'strength', bwFactor: 0.7, name: 'Bodyweight Lunges', muscle: 'legs', secondary: ['core'],
     equipment: [], video: 'QOVaHwm-Q6U',
     description: 'Step forward, lower until back knee almost touches floor, return. Alternate legs.',
     tips: ['Torso upright', 'Knee tracks over foot', 'Front heel planted'] },
-  { id: 'romanian', name: 'Romanian Deadlift', muscle: 'legs', secondary: ['back'],
+  { id: 'romanian', category: 'strength', name: 'Romanian Deadlift', muscle: 'legs', secondary: ['back'],
     equipment: ['dumbbells', 'barbell'], compound: true, video: 'jEy_czb3RKA',
     description: 'With near-straight legs (slight bend), hinge forward lowering weight along your legs until you feel a hamstring stretch.',
     tips: ['Flat back, hips push back', 'Weight stays close to legs', 'Feel hamstrings stretch'] },
-  { id: 'bulgarian', name: 'Bulgarian Split Squat', muscle: 'legs', secondary: ['core'],
+  { id: 'bulgarian', category: 'strength', name: 'Bulgarian Split Squat', muscle: 'legs', secondary: ['core'],
     equipment: ['bench', 'dumbbells'], compound: true, video: '2C-uNgKwPLE',
     description: 'Back foot on bench, front leg forward. Lower until back knee touches floor.',
     tips: ['Big step from bench', 'Slight forward torso lean', 'Weight on front heel'] },
-  { id: 'glute-bridge', bwFactor: 0.5, name: 'Glute Bridge', muscle: 'legs', secondary: ['core'],
+  { id: 'glute-bridge', category: 'strength', bwFactor: 0.5, name: 'Glute Bridge', muscle: 'legs', secondary: ['core'],
     equipment: [], video: 'OUgsJ8-Vi0E',
     description: 'Lie on back, knees bent, drive hips up squeezing glutes.',
     tips: ['Pause 1-2 sec at top', 'Do not arch lower back', 'Squeeze glutes hard'] },
 
   // ===== SHOULDERS =====
-  { id: 'ohp', name: 'Overhead Press', muscle: 'shoulders', secondary: ['triceps', 'core'],
+  { id: 'ohp', category: 'strength', name: 'Overhead Press', muscle: 'shoulders', secondary: ['triceps', 'core'],
     equipment: ['barbell'], compound: true, video: '2yjwXTZQDDI',
     description: 'Bar at chest level. Press overhead to full lockout, lower under control.',
     tips: ['Tight core', 'No lower-back arch', 'Elbows slightly in front of bar'] },
-  { id: 'db-press', name: 'Seated Dumbbell Press', muscle: 'shoulders', secondary: ['triceps'],
+  { id: 'db-press', category: 'strength', name: 'Seated Dumbbell Press', muscle: 'shoulders', secondary: ['triceps'],
     equipment: ['dumbbells', 'bench'], compound: true, video: 'qEwKCR5JCog',
     description: 'Seated with back support, press dumbbells overhead, bring them together at top, lower to shoulders.',
     tips: ['Press back into the bench', 'Do not slam elbows', 'Controlled descent'] },
-  { id: 'db-press-stand', name: 'Standing Dumbbell Press', muscle: 'shoulders', secondary: ['triceps', 'core'],
+  { id: 'db-press-stand', category: 'strength', name: 'Standing Dumbbell Press', muscle: 'shoulders', secondary: ['triceps', 'core'],
     equipment: ['dumbbells'], compound: true, video: '6Z15_WdXmVw',
     description: 'Standing, dumbbells at shoulders. Press up, lower. Keep torso stable.',
     tips: ['Tight core', 'No lower-back arching', 'Full range'] },
-  { id: 'lateral-raise', name: 'Dumbbell Lateral Raise', muscle: 'shoulders',
+  { id: 'lateral-raise', category: 'strength', name: 'Dumbbell Lateral Raise', muscle: 'shoulders',
     equipment: ['dumbbells'], video: '3VcKaXpzqRo',
     description: 'Standing with dumbbells at sides, raise arms out to parallel with the floor, lower.',
     tips: ['Slight bend in elbows', 'Do not raise above shoulder', 'Slow, no momentum'] },
-  { id: 'pike-pushup', bwFactor: 0.7, name: 'Pike Push-Ups', muscle: 'shoulders', secondary: ['triceps'],
+  { id: 'pike-pushup', category: 'strength', bwFactor: 0.7, name: 'Pike Push-Ups', muscle: 'shoulders', secondary: ['triceps'],
     equipment: [], video: 'EA8g7q9jauM',
     description: 'Hands on floor, hips raised high, lower head between hands.',
     tips: ['About 90 degrees between torso and legs', 'Head to floor', 'Elbows back'] },
 
   // ===== ARMS =====
-  { id: 'curl', name: 'Dumbbell Curl', muscle: 'biceps',
+  { id: 'curl', category: 'strength', name: 'Dumbbell Curl', muscle: 'biceps',
     equipment: ['dumbbells'], video: 'av7-8igSXTs',
     description: 'Standing with dumbbells at sides, curl up to shoulder level. Elbows pinned.',
     tips: ['No body swinging', 'Full range', 'Supinate at the top'] },
-  { id: 'hammer-curl', name: 'Hammer Curl', muscle: 'biceps',
+  { id: 'hammer-curl', category: 'strength', name: 'Hammer Curl', muscle: 'biceps',
     equipment: ['dumbbells'], video: 'TwD-YGVP4Bk',
     description: 'Curl with neutral grip (palms facing each other). Targets the brachialis.',
     tips: ['No wrist rotation', 'Elbows close to body', 'Slow lowering'] },
-  { id: 'band-curl', name: 'Band Curl', muscle: 'biceps',
+  { id: 'band-curl', category: 'strength', name: 'Band Curl', muscle: 'biceps',
     equipment: ['bands'], video: 'vBGu6ofxmHo',
     description: 'Stand on band, hold handles. Curl up to shoulders.',
     tips: ['Elbows pinned', 'Full range', 'Slow eccentric'] },
-  { id: 'tri-ext', name: 'Triceps Extension', muscle: 'triceps',
+  { id: 'tri-ext', category: 'strength', name: 'Triceps Extension', muscle: 'triceps',
     equipment: ['dumbbells'], video: '_gsUck-7M9I',
     description: 'Lying or seated, lower the weight behind your head bending elbows. Extend back up.',
     tips: ['Elbows fixed', 'Upper arms vertical', 'Lower slowly'] },
-  { id: 'dips', bwFactor: 0.9, name: 'Parallel Bar Dips', muscle: 'triceps', secondary: ['chest', 'shoulders'],
+  { id: 'dips', category: 'strength', bwFactor: 0.9, name: 'Parallel Bar Dips', muscle: 'triceps', secondary: ['chest', 'shoulders'],
     equipment: ['parallel-bars'], compound: true, video: '2z8JmcrW-As',
     description: 'On parallel bars, lower until elbows hit 90 degrees, push back up. Vertical torso targets triceps.',
     tips: ['Elbows back', 'Do not go below shoulder comfort', 'Controlled descent'] },
-  { id: 'bench-dips', bwFactor: 0.55, name: 'Bench Dips', muscle: 'triceps', secondary: ['shoulders'],
+  { id: 'bench-dips', category: 'strength', bwFactor: 0.55, name: 'Bench Dips', muscle: 'triceps', secondary: ['shoulders'],
     equipment: ['bench'], video: '6kALZikXxLc',
     description: 'Sit on edge of bench, hands behind. Lower body bending arms to 90 degrees, press up.',
     tips: ['Elbows back, not flared', 'Stay close to the bench', 'Full range'] },
-  { id: 'diamond-pushup', bwFactor: 0.65, name: 'Diamond Push-Ups', muscle: 'triceps', secondary: ['chest'],
+  { id: 'diamond-pushup', category: 'strength', bwFactor: 0.65, name: 'Diamond Push-Ups', muscle: 'triceps', secondary: ['chest'],
     equipment: [], video: 'J0DnG1_S92I',
     description: 'Push-ups with hands together under chest (thumbs and index fingers form a diamond).',
     tips: ['Elbows along the body', 'Chest to hands', 'Body straight'] },
 
   // ===== CORE =====
-  { id: 'plank', bwFactor: 0.35, name: 'Plank', muscle: 'core',
+  { id: 'plank', category: 'strength', bwFactor: 0.35, name: 'Plank', muscle: 'core',
     equipment: [], video: 'ASdvN_XEl_c', isTime: true,
     description: 'On forearms and toes, body in a straight line. Hold the tension.',
     tips: ['Hips do not sag', 'Squeeze abs and glutes', 'Breathe steadily'] },
-  { id: 'side-plank', bwFactor: 0.3, name: 'Side Plank', muscle: 'core',
+  { id: 'side-plank', category: 'strength', bwFactor: 0.3, name: 'Side Plank', muscle: 'core',
     equipment: [], video: 'K2VljzCC16g', isTime: true,
     description: 'On one forearm, body sideways to the floor. Hold a straight line.',
     tips: ['Hips up', 'Body straight', 'Switch sides'] },
-  { id: 'crunches', bwFactor: 0.2, name: 'Crunches', muscle: 'core',
+  { id: 'crunches', category: 'strength', bwFactor: 0.2, name: 'Crunches', muscle: 'core',
     equipment: [], video: 'Xyd_fa5zoEU',
     description: 'On your back, knees bent, curl your torso up, exhale at the top.',
     tips: ['Do not pull on neck', 'Lower back stays pressed down', 'Slow on the way down'] },
-  { id: 'leg-raise', bwFactor: 0.25, name: 'Lying Leg Raise', muscle: 'core',
+  { id: 'leg-raise', category: 'strength', bwFactor: 0.25, name: 'Lying Leg Raise', muscle: 'core',
     equipment: [], video: 'JB2oyawG9KI',
     description: 'On your back, raise straight legs to vertical, lower without touching the floor.',
     tips: ['Lower back pressed down', 'Controlled descent', 'No swinging'] },
-  { id: 'mountain-climb', bwFactor: 0.5, name: 'Mountain Climbers', muscle: 'core', secondary: ['legs'],
+  { id: 'mountain-climb', category: 'strength', bwFactor: 0.5, name: 'Mountain Climbers', muscle: 'core', secondary: ['legs'],
     equipment: [], video: 'nmwgirgXLYM',
     description: 'Plank position, alternate driving knees to chest at a quick pace.',
     tips: ['Hips stable', 'Steady breathing', 'Body straight'] },
-  { id: 'russian-twist', bwFactor: 0.2, name: 'Russian Twist', muscle: 'core',
+  { id: 'russian-twist', category: 'strength', bwFactor: 0.2, name: 'Russian Twist', muscle: 'core',
     equipment: [], video: 'wkD8rjkodUI',
     description: 'Sit, lean back, feet off the floor. Rotate torso side to side.',
-    tips: ['Add weight for difficulty', 'Flat back', 'Twist with the torso, not arms'] }
+    tips: ['Add weight for difficulty', 'Flat back', 'Twist with the torso, not arms'] },
+
+  // ===== ДОПОЛНИТЕЛЬНЫЕ СИЛОВЫЕ =====
+  { id: 'floor-press', category: 'strength', name: 'Floor Press', muscle: 'chest', secondary: ['triceps'],
+    equipment: ['dumbbells'], compound: true, video: 'NPHkjJYx-fU',
+    description: 'Lie on the floor with dumbbells. Lower until upper arms touch the floor, then press up.',
+    tips: ['Pause briefly when elbows touch floor', 'Limited range protects shoulders', 'Squeeze chest at top'] },
+  { id: 'floor-fly', category: 'strength', name: 'Floor Fly', muscle: 'chest',
+    equipment: ['dumbbells'], video: 'eozdVDA78K0',
+    description: 'Lying on the floor, open arms with slight bend, bring dumbbells back together over chest.',
+    tips: ['Limited range vs bench protects shoulders', 'Light weight, clean form', 'Squeeze at the top'] },
+  { id: 'hip-thrust', category: 'strength', name: 'Hip Thrust', muscle: 'legs', secondary: ['core'], bwFactor: 0.65,
+    equipment: [], compound: true, video: 'xDmFkJxPzeM',
+    description: 'Sit on floor, knees bent, drive hips up squeezing glutes hard at top.',
+    tips: ['Pause 1-2 sec at top', 'Keep chin tucked', 'Push through heels'] },
+  { id: 'calf-raise', category: 'strength', name: 'Calf Raise', muscle: 'legs', bwFactor: 0.85,
+    equipment: [], video: '-M4-G8p8fmc',
+    description: 'Stand straight, rise up on the balls of your feet, hold briefly, lower under control.',
+    tips: ['Full range — go up high, down low', 'Pause at top for 1 sec', 'Slow eccentric'] },
+  { id: 'face-pull', category: 'strength', name: 'Band Face Pull', muscle: 'back', secondary: ['shoulders'],
+    equipment: ['bands'], video: 'rep-qVOkqgk',
+    description: 'Anchor band at face level. Pull handles towards face, elbows high, squeeze rear delts.',
+    tips: ['Elbows higher than wrists', 'Squeeze shoulder blades', 'Great for posture'] },
+  { id: 'pull-apart', category: 'strength', name: 'Band Pull-Apart', muscle: 'back', secondary: ['shoulders'],
+    equipment: ['bands'], video: 'fHyLqv9JYP4',
+    description: 'Hold band in front at shoulder height, pull hands apart by squeezing shoulder blades.',
+    tips: ['Arms stay straight', 'Squeeze blades fully', 'Slow on the way back'] },
+  { id: 'front-raise', category: 'strength', name: 'Dumbbell Front Raise', muscle: 'shoulders',
+    equipment: ['dumbbells'], video: 'sxeY3aOmHv0',
+    description: 'Raise dumbbells in front of you to shoulder height, lower under control.',
+    tips: ['Slight bend in elbows', 'No swinging', 'Stop at shoulder height'] },
+  { id: 'rear-delt-fly', category: 'strength', name: 'Bent-Over Rear Delt Fly', muscle: 'shoulders', secondary: ['back'],
+    equipment: ['dumbbells'], video: 'ttvfGg9d76c',
+    description: 'Hinge forward with flat back. Open arms wide squeezing rear delts and shoulder blades.',
+    tips: ['Slight bend in elbows', 'Lead with back of hands', 'Light weight, feel the squeeze'] },
+
+  // ===== МОБИЛИТИ / ЗАРЯДКА =====
+  // category: 'mobility' — эти упражнения скрыты в обычной библиотеке, используются только в зарядке
+  { id: 'cat-cow', category: 'mobility', name: 'Cat-Cow Stretch', muscle: 'back', secondary: ['core'],
+    equipment: ['mat'], video: 'kqnua4rHVVA', isTime: true,
+    description: 'On all fours, arch your back up (cat), then drop belly and lift head (cow). Flow smoothly.',
+    tips: ['Move with your breath', 'Slow, controlled motion', 'Engage core throughout'] },
+  { id: 'bird-dog', category: 'mobility', name: 'Bird Dog', muscle: 'core', secondary: ['back'],
+    equipment: ['mat'], video: 'wiFNA3sqjCA',
+    description: 'On all fours, extend opposite arm and leg until straight, hold briefly, switch sides.',
+    tips: ['Keep hips square', 'Engage core', 'Slow and stable, no swinging'] },
+  { id: 'dead-bug', category: 'mobility', name: 'Dead Bug', muscle: 'core',
+    equipment: ['mat'], video: '4XLEnwUr1d8',
+    description: 'On back, arms up, legs at 90 degrees. Lower opposite arm and leg simultaneously, return.',
+    tips: ['Lower back stays pressed down', 'Slow, controlled motion', 'Breathe steadily'] },
+  { id: 'inchworm', category: 'mobility', name: 'Inchworm', muscle: 'core', secondary: ['shoulders', 'legs'],
+    equipment: ['mat'], video: 'guqcStE0lzc',
+    description: 'Stand, hinge forward, walk hands out to plank, walk feet up to hands, repeat.',
+    tips: ['Keep legs as straight as comfortable', 'Engage core in plank', 'Smooth flow'] },
+  { id: 'world-greatest', category: 'mobility', name: "World's Greatest Stretch", muscle: 'legs', secondary: ['back', 'shoulders'],
+    equipment: ['mat'], video: 'OS0sbEmAHcA',
+    description: 'Lunge forward, hand to floor inside front foot, rotate torso reaching up. Switch sides.',
+    tips: ['Reach high with rotating arm', 'Keep back leg active', 'Hold 2-3 sec each side'] },
+  { id: 'child-pose', category: 'mobility', name: "Child's Pose", muscle: 'back', secondary: ['shoulders'],
+    equipment: ['mat'], video: 'eqVMAPM00DM', isTime: true,
+    description: 'Kneel, sit back on heels, fold forward with arms extended. Relax and breathe.',
+    tips: ['Forehead to mat', 'Arms long and active', 'Deep breaths'] },
+  { id: 'cobra-stretch', category: 'mobility', name: 'Cobra Stretch', muscle: 'back', secondary: ['core'],
+    equipment: ['mat'], video: 'JDcdhTuycOI', isTime: true,
+    description: 'Lie face down, hands by shoulders. Press chest up, arching gently, look forward.',
+    tips: ['Hips stay on floor', 'Soft elbows', 'No pinching in lower back'] },
+  { id: 'arm-circles', category: 'mobility', name: 'Arm Circles', muscle: 'shoulders',
+    equipment: [], video: '140RTNMciH8', isTime: true,
+    description: 'Stand with arms extended to sides. Make small circles forward, then backward.',
+    tips: ['Start small, get bigger', 'Both directions', 'Stay relaxed'] },
+  { id: 'shoulder-rolls', category: 'mobility', name: 'Shoulder Rolls', muscle: 'shoulders',
+    equipment: [], video: 'fTafRXQzs2k', isTime: true,
+    description: 'Roll shoulders forward in big circles, then reverse and roll backward.',
+    tips: ['Big, slow circles', 'Both directions', 'Relax neck'] },
+  { id: 'jumping-jacks', category: 'mobility', name: 'Jumping Jacks', muscle: 'legs', secondary: ['shoulders', 'core'],
+    equipment: [], video: 'iSSAk4XCsRA', isTime: true,
+    description: 'Jump while spreading legs and raising arms overhead, then return. Repeat at steady pace.',
+    tips: ['Land softly on balls of feet', 'Steady rhythm', 'Engage core'] },
+  { id: 'banded-walk', category: 'mobility', name: 'Banded Lateral Walk', muscle: 'legs',
+    equipment: ['bands'], video: 'GVBVC58Ud1g',
+    description: 'Mini band above knees. Stand in mini-squat, step sideways keeping tension on band.',
+    tips: ['Constant tension on band', 'Stay in athletic stance', 'Toes forward'] },
+  { id: 'forward-fold', category: 'mobility', name: 'Standing Forward Fold', muscle: 'back', secondary: ['legs'],
+    equipment: [], video: 'mRrKlV4tBBs', isTime: true,
+    description: 'Stand, hinge at hips, fold forward letting arms hang. Bend knees if needed.',
+    tips: ['Bend knees as much as needed', 'Relax neck and arms', 'Breathe into the back'] }
 ];
 
 // Muscle groups
@@ -199,7 +284,8 @@ const EQUIPMENT_NAMES = {
   'pullup-bar': 'Pull-up bar',
   'parallel-bars': 'Parallel bars',
   'bands': 'Resistance bands',
-  'kettlebell': 'Kettlebell'
+  'kettlebell': 'Kettlebell',
+  'mat': 'Yoga mat'
 };
 
 // SVG-иконки оборудования. Размер 28×28, в стиле приложения, акцентный цвет.
@@ -259,6 +345,14 @@ function equipmentSVG(id, size = 28) {
     'kettlebell': `
       <path d="M 8 6 Q 8 3 12 3 Q 16 3 16 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
       <path d="M 7 8 L 17 8 L 19 21 L 5 21 Z" fill="currentColor"/>
+    `,
+    // Коврик для йоги: свёрнутый рулон
+    'mat': `
+      <rect x="3" y="6" width="18" height="14" rx="2" fill="currentColor" opacity="0.3"/>
+      <rect x="3" y="6" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.5" fill="none"/>
+      <line x1="6" y1="9" x2="18" y2="9" stroke="currentColor" stroke-width="1" opacity="0.6"/>
+      <line x1="6" y1="13" x2="18" y2="13" stroke="currentColor" stroke-width="1" opacity="0.6"/>
+      <line x1="6" y1="17" x2="18" y2="17" stroke="currentColor" stroke-width="1" opacity="0.6"/>
     `
   };
   const path = icons[id] || `<circle cx="12" cy="12" r="6" fill="currentColor"/>`;
@@ -274,7 +368,8 @@ const EQUIPMENT_ICONS = {
   'pullup-bar': equipmentSVG('pullup-bar'),
   'parallel-bars': equipmentSVG('parallel-bars'),
   'bands': equipmentSVG('bands'),
-  'kettlebell': equipmentSVG('kettlebell')
+  'kettlebell': equipmentSVG('kettlebell'),
+  'mat': equipmentSVG('mat')
 };
 
 // ============== STATE ==============
@@ -421,7 +516,9 @@ function generateWorkout() {
   const targetMuscles = muscleOrder.slice(0, 3);
 
   // Фильтруем упражнения по оборудованию и целевым мышцам
+  // Только силовые — мобилити для зарядки и здесь не годятся
   const available = EXERCISES.filter(ex =>
+    ex.category !== 'mobility' &&
     exerciseAvailable(ex, equipment) &&
     (targetMuscles.includes(ex.muscle) || targetMuscles.includes(ex.secondary?.[0]))
   );
@@ -1321,6 +1418,8 @@ function renderExerciseLibrary() {
   const search = window._exerciseSearch || '';
 
   const filtered = EXERCISES.filter(e => {
+    // Мобилити скрыты в обычной библиотеке (показываются только в Зарядке)
+    if (e.category === 'mobility') return false;
     if (activeFilter !== 'all' && e.muscle !== activeFilter) return false;
     if (search && !e.name.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
@@ -1468,7 +1567,10 @@ function renderMiniChart(values) {
 
 function openAddExercise() {
   const equipment = STATE.profile?.equipment || [];
-  const available = EXERCISES.filter(ex => exerciseAvailable(ex, equipment));
+  // Только силовые — мобилити недоступны в силовой тренировке
+  const available = EXERCISES.filter(ex =>
+    ex.category !== 'mobility' && exerciseAvailable(ex, equipment)
+  );
 
   openModal(`
     <div class="eyebrow">Add</div>
@@ -3080,7 +3182,9 @@ function swapExercise(idx) {
   const usedIds = STATE.currentWorkout.exercises.map(e => e.exerciseId);
 
   // Альтернативы: та же мышца, другое упражнение, не уже в тренировке, доступное оборудование
+  // Только силовые — не предлагаем мобилити как замену в силовой тренировке
   const alternatives = EXERCISES.filter(ex =>
+    ex.category !== 'mobility' &&
     ex.muscle === currentDef.muscle &&
     ex.id !== current.exerciseId &&
     !usedIds.includes(ex.id) &&

@@ -537,57 +537,76 @@ document.getElementById('modal').addEventListener('click', (e) => {
 // Упрощённый вид тела спереди и сзади
 function muscleBodySVG(fatigue) {
   const cls = m => `muscle-part ${fatigueLevel(fatigue[m] || 0)}`;
+  // V-shape пропорции, viewBox 100×200
+  // Координаты согласованы с workoutSilhouetteSVG для визуальной целостности
   return `
     <div class="muscle-body">
-      <svg viewBox="0 0 120 240" xmlns="http://www.w3.org/2000/svg">
+      <svg viewBox="0 0 100 200" xmlns="http://www.w3.org/2000/svg">
         <!-- Голова -->
-        <circle cx="60" cy="20" r="12" fill="#2a2a2a" stroke="#383838" stroke-width="1"/>
+        <circle cx="50" cy="14" r="8" fill="#2a2a2a" stroke="#383838" stroke-width="0.8"/>
         <!-- Шея -->
-        <rect x="55" y="30" width="10" height="8" fill="#2a2a2a"/>
-        <!-- Плечи -->
-        <path class="${cls('shoulders')}" d="M30 40 Q25 42 22 50 L28 60 L40 55 L40 42 Z"/>
-        <path class="${cls('shoulders')}" d="M90 40 Q95 42 98 50 L92 60 L80 55 L80 42 Z"/>
-        <!-- Грудь -->
-        <path class="${cls('chest')}" d="M40 42 L60 42 L60 75 L40 75 Z M60 42 L80 42 L80 75 L60 75 Z"/>
-        <!-- Пресс -->
-        <path class="${cls('core')}" d="M45 75 L75 75 L72 120 L48 120 Z"/>
+        <rect x="46" y="21" width="8" height="5" fill="#2a2a2a"/>
+
+        <!-- Плечи (дельты) — большие эллипсы поверх -->
+        <ellipse class="${cls('shoulders')}" cx="20" cy="36" rx="11" ry="9"/>
+        <ellipse class="${cls('shoulders')}" cx="80" cy="36" rx="11" ry="9"/>
+
+        <!-- Грудь — две половины -->
+        <path class="${cls('chest')}" d="M30 30 L50 30 L50 58 L34 62 L30 56 Z"/>
+        <path class="${cls('chest')}" d="M70 30 L50 30 L50 58 L66 62 L70 56 Z"/>
+
         <!-- Бицепсы -->
-        <path class="${cls('biceps')}" d="M22 50 L18 85 L28 90 L32 60 Z"/>
-        <path class="${cls('biceps')}" d="M98 50 L102 85 L92 90 L88 60 Z"/>
+        <path class="${cls('biceps')}" d="M11 44 L9 78 L22 80 L24 46 Z"/>
+        <path class="${cls('biceps')}" d="M89 44 L91 78 L78 80 L76 46 Z"/>
+
         <!-- Предплечья -->
-        <rect x="15" y="88" width="12" height="30" rx="4" fill="#2a2a2a"/>
-        <rect x="93" y="88" width="12" height="30" rx="4" fill="#2a2a2a"/>
-        <!-- Ноги (квадрицепсы) -->
-        <path class="${cls('legs')}" d="M45 120 L42 180 L55 180 L57 120 Z"/>
-        <path class="${cls('legs')}" d="M63 120 L65 180 L78 180 L75 120 Z"/>
+        <rect x="9" y="80" width="11" height="24" rx="3" fill="#2a2a2a"/>
+        <rect x="80" y="80" width="11" height="24" rx="3" fill="#2a2a2a"/>
+
+        <!-- Пресс -->
+        <path class="${cls('core')}" d="M34 62 L66 62 L62 96 L38 96 Z"/>
+
+        <!-- Бёдра -->
+        <path class="${cls('legs')}" d="M38 96 L34 148 L46 150 L50 96 Z"/>
+        <path class="${cls('legs')}" d="M62 96 L66 148 L54 150 L50 96 Z"/>
+
         <!-- Голени -->
-        <rect x="42" y="180" width="14" height="45" rx="4" fill="#2a2a2a"/>
-        <rect x="64" y="180" width="14" height="45" rx="4" fill="#2a2a2a"/>
+        <rect x="35" y="150" width="11" height="40" rx="3" fill="#2a2a2a"/>
+        <rect x="54" y="150" width="11" height="40" rx="3" fill="#2a2a2a"/>
       </svg>
     </div>
     <div class="muscle-body">
-      <svg viewBox="0 0 120 240" xmlns="http://www.w3.org/2000/svg">
-        <!-- Голова сзади -->
-        <circle cx="60" cy="20" r="12" fill="#2a2a2a" stroke="#383838" stroke-width="1"/>
-        <rect x="55" y="30" width="10" height="8" fill="#2a2a2a"/>
-        <!-- Плечи (трапеции) -->
-        <path class="${cls('shoulders')}" d="M30 40 Q25 42 22 50 L28 60 L40 55 L40 42 Z"/>
-        <path class="${cls('shoulders')}" d="M90 40 Q95 42 98 50 L92 60 L80 55 L80 42 Z"/>
-        <!-- Спина -->
-        <path class="${cls('back')}" d="M40 42 L80 42 L80 110 L40 110 Z"/>
+      <svg viewBox="0 0 100 200" xmlns="http://www.w3.org/2000/svg">
+        <!-- Голова -->
+        <circle cx="50" cy="14" r="8" fill="#2a2a2a" stroke="#383838" stroke-width="0.8"/>
+        <rect x="46" y="21" width="8" height="5" fill="#2a2a2a"/>
+
+        <!-- СПИНА: 4 зоны V-формы до y=80 -->
+        <path class="${cls('back')}" d="M30 30 L70 30 L68 44 L32 44 Z"/>
+        <path class="${cls('back')}" d="M32 44 L68 44 L67 60 L33 60 Z"/>
+        <path class="${cls('back')}" d="M33 60 L67 60 L65 80 L35 80 Z"/>
+        <!-- Ягодицы — занимают зону 80-96, чтобы ноги начались с y=96 -->
+        <path class="${cls('legs')}" d="M35 80 L65 80 L62 96 L38 96 Z"/>
+
+        <!-- Плечи (поверх спины) -->
+        <ellipse class="${cls('shoulders')}" cx="20" cy="36" rx="11" ry="9"/>
+        <ellipse class="${cls('shoulders')}" cx="80" cy="36" rx="11" ry="9"/>
+
         <!-- Трицепсы -->
-        <path class="${cls('triceps')}" d="M22 50 L18 85 L28 90 L32 60 Z"/>
-        <path class="${cls('triceps')}" d="M98 50 L102 85 L92 90 L88 60 Z"/>
+        <path class="${cls('triceps')}" d="M11 44 L9 78 L22 80 L24 46 Z"/>
+        <path class="${cls('triceps')}" d="M89 44 L91 78 L78 80 L76 46 Z"/>
+
         <!-- Предплечья -->
-        <rect x="15" y="88" width="12" height="30" rx="4" fill="#2a2a2a"/>
-        <rect x="93" y="88" width="12" height="30" rx="4" fill="#2a2a2a"/>
-        <!-- Ягодицы/низ спины -->
-        <path class="${cls('legs')}" d="M42 110 L78 110 L75 130 L45 130 Z"/>
-        <!-- Задняя поверхность бедра -->
-        <path class="${cls('legs')}" d="M45 130 L42 180 L55 180 L57 130 Z"/>
-        <path class="${cls('legs')}" d="M63 130 L65 180 L78 180 L75 130 Z"/>
-        <rect x="42" y="180" width="14" height="45" rx="4" fill="#2a2a2a"/>
-        <rect x="64" y="180" width="14" height="45" rx="4" fill="#2a2a2a"/>
+        <rect x="9" y="80" width="11" height="24" rx="3" fill="#2a2a2a"/>
+        <rect x="80" y="80" width="11" height="24" rx="3" fill="#2a2a2a"/>
+
+        <!-- Бёдра — те же координаты что спереди -->
+        <path class="${cls('legs')}" d="M38 96 L34 148 L46 150 L50 96 Z"/>
+        <path class="${cls('legs')}" d="M62 96 L66 148 L54 150 L50 96 Z"/>
+
+        <!-- Голени -->
+        <rect x="35" y="150" width="11" height="40" rx="3" fill="#2a2a2a"/>
+        <rect x="54" y="150" width="11" height="40" rx="3" fill="#2a2a2a"/>
       </svg>
     </div>
   `;
@@ -1761,97 +1780,95 @@ function workoutSilhouetteSVG(muscles) {
   // Возвращает заливку для каждой группы — accent если работала, dim если нет
   const c = (m) => set.has(m) ? accent : dim;
 
+  // Силуэт: V-образный мужской с пропорциями
+  // ViewBox 100×200. Плечи широкие (20-80), талия узкая (38-62).
+  // Спина и фронт согласованы по контуру и высоте.
   return `
     <div style="display:flex;justify-content:center;align-items:flex-start;gap:24px;padding:8px 0;">
       <!-- ВИД СПЕРЕДИ -->
-      <svg viewBox="0 0 80 180" width="100" height="220" xmlns="http://www.w3.org/2000/svg">
+      <svg viewBox="0 0 100 200" width="105" height="240" xmlns="http://www.w3.org/2000/svg">
         <!-- голова -->
-        <circle cx="40" cy="14" r="9" fill="${skin}" stroke="${stroke}" stroke-width="0.8"/>
+        <circle cx="50" cy="14" r="8" fill="${skin}" stroke="${stroke}" stroke-width="0.8"/>
         <!-- шея -->
-        <rect x="36" y="22" width="8" height="5" fill="${skin}"/>
+        <rect x="46" y="21" width="8" height="5" fill="${skin}"/>
 
-        <!-- ТОРС: сначала грудь (основная зона) -->
-        <!-- Грудь — занимает верхнюю часть торса -->
-        <path d="M28 32 L52 32 L52 56 L40 60 L28 56 Z" fill="${c('chest')}" stroke="${stroke}" stroke-width="0.8"/>
-        <!-- разделитель груди (видим только если грудь активна) -->
-        ${set.has('chest') ? `<line x1="40" y1="32" x2="40" y2="58" stroke="rgba(0,0,0,0.4)" stroke-width="1"/>` : ''}
+        <!-- ПЛЕЧИ (дельты) — большие эллипсы по бокам -->
+        <ellipse cx="20" cy="36" rx="11" ry="9" fill="${c('shoulders')}" stroke="${stroke}" stroke-width="0.8"/>
+        <ellipse cx="80" cy="36" rx="11" ry="9" fill="${c('shoulders')}" stroke="${stroke}" stroke-width="0.8"/>
 
-        <!-- Плечи — слева и справа, не перекрывают грудь -->
-        <ellipse cx="22" cy="36" rx="8" ry="7" fill="${c('shoulders')}" stroke="${stroke}" stroke-width="0.8"/>
-        <ellipse cx="58" cy="36" rx="8" ry="7" fill="${c('shoulders')}" stroke="${stroke}" stroke-width="0.8"/>
+        <!-- ГРУДЬ — две половины -->
+        <path d="M30 30 L50 30 L50 58 L34 62 L30 56 Z" fill="${c('chest')}" stroke="${stroke}" stroke-width="0.8"/>
+        <path d="M70 30 L50 30 L50 58 L66 62 L70 56 Z" fill="${c('chest')}" stroke="${stroke}" stroke-width="0.8"/>
 
-        <!-- Бицепсы -->
-        <path d="M14 42 L11 66 L21 70 L24 44 Z" fill="${c('biceps')}" stroke="${stroke}" stroke-width="0.8"/>
-        <path d="M66 42 L69 66 L59 70 L56 44 Z" fill="${c('biceps')}" stroke="${stroke}" stroke-width="0.8"/>
+        <!-- БИЦЕПСЫ — массивные -->
+        <path d="M11 44 L9 78 L22 80 L24 46 Z" fill="${c('biceps')}" stroke="${stroke}" stroke-width="0.8"/>
+        <path d="M89 44 L91 78 L78 80 L76 46 Z" fill="${c('biceps')}" stroke="${stroke}" stroke-width="0.8"/>
 
         <!-- Предплечья -->
-        <rect x="9" y="68" width="10" height="22" rx="3" fill="${skin}" stroke="${stroke}" stroke-width="0.6"/>
-        <rect x="61" y="68" width="10" height="22" rx="3" fill="${skin}" stroke="${stroke}" stroke-width="0.6"/>
+        <rect x="9" y="80" width="11" height="24" rx="3" fill="${skin}" stroke="${stroke}" stroke-width="0.6"/>
+        <rect x="80" y="80" width="11" height="24" rx="3" fill="${skin}" stroke="${stroke}" stroke-width="0.6"/>
 
-        <!-- Пресс — нижняя часть торса -->
-        <path d="M30 60 L50 60 L48 88 L32 88 Z" fill="${c('core')}" stroke="${stroke}" stroke-width="0.8"/>
-        <!-- линии пресса (видим только если пресс активен) -->
+        <!-- ПРЕСС / КОР — V-образная талия -->
+        <path d="M34 62 L66 62 L62 96 L38 96 Z" fill="${c('core')}" stroke="${stroke}" stroke-width="0.8"/>
         ${set.has('core') ? `
-          <line x1="40" y1="62" x2="40" y2="86" stroke="rgba(0,0,0,0.4)" stroke-width="0.8"/>
-          <line x1="32" y1="70" x2="48" y2="70" stroke="rgba(0,0,0,0.4)" stroke-width="0.8"/>
-          <line x1="32" y1="78" x2="48" y2="78" stroke="rgba(0,0,0,0.4)" stroke-width="0.8"/>
+          <line x1="50" y1="64" x2="50" y2="94" stroke="rgba(0,0,0,0.4)" stroke-width="0.8"/>
+          <line x1="40" y1="74" x2="60" y2="74" stroke="rgba(0,0,0,0.4)" stroke-width="0.7"/>
+          <line x1="40" y1="84" x2="60" y2="84" stroke="rgba(0,0,0,0.4)" stroke-width="0.7"/>
         ` : ''}
 
-        <!-- Бёдра/квадрицепсы -->
-        <path d="M32 88 L30 132 L38 134 L40 88 Z" fill="${c('legs')}" stroke="${stroke}" stroke-width="0.8"/>
-        <path d="M48 88 L50 132 L42 134 L40 88 Z" fill="${c('legs')}" stroke="${stroke}" stroke-width="0.8"/>
+        <!-- Бёдра / квадрицепсы — начинаются с y=96 -->
+        <path d="M38 96 L34 148 L46 150 L50 96 Z" fill="${c('legs')}" stroke="${stroke}" stroke-width="0.8"/>
+        <path d="M62 96 L66 148 L54 150 L50 96 Z" fill="${c('legs')}" stroke="${stroke}" stroke-width="0.8"/>
 
         <!-- Голени -->
-        <rect x="30" y="134" width="9" height="36" rx="3" fill="${skin}" stroke="${stroke}" stroke-width="0.6"/>
-        <rect x="41" y="134" width="9" height="36" rx="3" fill="${skin}" stroke="${stroke}" stroke-width="0.6"/>
+        <rect x="35" y="150" width="11" height="40" rx="3" fill="${skin}" stroke="${stroke}" stroke-width="0.6"/>
+        <rect x="54" y="150" width="11" height="40" rx="3" fill="${skin}" stroke="${stroke}" stroke-width="0.6"/>
       </svg>
 
       <!-- ВИД СЗАДИ -->
-      <svg viewBox="0 0 80 180" width="100" height="220" xmlns="http://www.w3.org/2000/svg">
+      <svg viewBox="0 0 100 200" width="105" height="240" xmlns="http://www.w3.org/2000/svg">
         <!-- голова -->
-        <circle cx="40" cy="14" r="9" fill="${skin}" stroke="${stroke}" stroke-width="0.8"/>
-        <!-- шея -->
-        <rect x="36" y="22" width="8" height="5" fill="${skin}"/>
+        <circle cx="50" cy="14" r="8" fill="${skin}" stroke="${stroke}" stroke-width="0.8"/>
+        <rect x="46" y="21" width="8" height="5" fill="${skin}"/>
 
-        <!-- СПИНА: 4 зоны (трапеции, верх, широчайшие, поясница) -->
-        <!-- Трапеции: трапециевидный сегмент от шеи к лопаткам -->
-        <path d="M30 32 L50 32 L48 44 L32 44 Z" fill="${c('back')}" stroke="${stroke}" stroke-width="0.8"/>
-        <!-- Верх спины (между лопатками): прямоугольная зона -->
-        <path d="M32 44 L48 44 L48 56 L32 56 Z" fill="${c('back')}" stroke="${stroke}" stroke-width="0.8"/>
-        <!-- Широчайшие: V-образная зона расширяется к талии -->
-        <path d="M32 56 L48 56 L51 70 L29 70 Z" fill="${c('back')}" stroke="${stroke}" stroke-width="0.8"/>
-        <!-- Поясница: нижний прямоугольник -->
-        <path d="M29 70 L51 70 L52 76 L28 76 Z" fill="${c('back')}" stroke="${stroke}" stroke-width="0.8"/>
-        <!-- Центральная линия позвоночника (всегда видна для анатомичности) -->
-        <line x1="40" y1="32" x2="40" y2="76" stroke="rgba(0,0,0,0.45)" stroke-width="0.7"/>
-        <!-- Дополнительные детали лопаток (если активна) -->
+        <!-- СПИНА: 4 зоны V-формы, до y=80 (без расширений) -->
+        <!-- Трапеции -->
+        <path d="M30 30 L70 30 L68 44 L32 44 Z" fill="${c('back')}" stroke="${stroke}" stroke-width="0.8"/>
+        <!-- Верх спины -->
+        <path d="M32 44 L68 44 L67 60 L33 60 Z" fill="${c('back')}" stroke="${stroke}" stroke-width="0.8"/>
+        <!-- Широчайшие -->
+        <path d="M33 60 L67 60 L65 80 L35 80 Z" fill="${c('back')}" stroke="${stroke}" stroke-width="0.8"/>
+        <!-- Ягодицы — занимают зону 80-96, чтобы ноги начались с y=96 как спереди -->
+        <path d="M35 80 L65 80 L62 96 L38 96 Z" fill="${c('legs')}" stroke="${stroke}" stroke-width="0.8"/>
+        <!-- Линия позвоночника (только до y=80, в спине) -->
+        <line x1="50" y1="30" x2="50" y2="80" stroke="rgba(0,0,0,0.45)" stroke-width="0.8"/>
+        <!-- Лёгкая граница между низом спины и ягодицами -->
+        <line x1="38" y1="80" x2="62" y2="80" stroke="rgba(0,0,0,0.3)" stroke-width="0.5"/>
+        <!-- Лопатки (если активна спина) -->
         ${set.has('back') ? `
-          <path d="M33 46 Q36 51 39 50" stroke="rgba(0,0,0,0.3)" stroke-width="0.7" fill="none"/>
-          <path d="M47 46 Q44 51 41 50" stroke="rgba(0,0,0,0.3)" stroke-width="0.7" fill="none"/>
+          <path d="M40 50 Q44 56 48 56" stroke="rgba(0,0,0,0.35)" stroke-width="0.7" fill="none"/>
+          <path d="M60 50 Q56 56 52 56" stroke="rgba(0,0,0,0.35)" stroke-width="0.7" fill="none"/>
         ` : ''}
 
-        <!-- Плечи (трапеции боковые) — поверх верха спины -->
-        <ellipse cx="22" cy="36" rx="8" ry="7" fill="${c('shoulders')}" stroke="${stroke}" stroke-width="0.8"/>
-        <ellipse cx="58" cy="36" rx="8" ry="7" fill="${c('shoulders')}" stroke="${stroke}" stroke-width="0.8"/>
+        <!-- ПЛЕЧИ — поверх спины -->
+        <ellipse cx="20" cy="36" rx="11" ry="9" fill="${c('shoulders')}" stroke="${stroke}" stroke-width="0.8"/>
+        <ellipse cx="80" cy="36" rx="11" ry="9" fill="${c('shoulders')}" stroke="${stroke}" stroke-width="0.8"/>
 
-        <!-- Трицепсы -->
-        <path d="M14 42 L11 66 L21 70 L24 44 Z" fill="${c('triceps')}" stroke="${stroke}" stroke-width="0.8"/>
-        <path d="M66 42 L69 66 L59 70 L56 44 Z" fill="${c('triceps')}" stroke="${stroke}" stroke-width="0.8"/>
+        <!-- ТРИЦЕПСЫ -->
+        <path d="M11 44 L9 78 L22 80 L24 46 Z" fill="${c('triceps')}" stroke="${stroke}" stroke-width="0.8"/>
+        <path d="M89 44 L91 78 L78 80 L76 46 Z" fill="${c('triceps')}" stroke="${stroke}" stroke-width="0.8"/>
 
         <!-- Предплечья -->
-        <rect x="9" y="68" width="10" height="22" rx="3" fill="${skin}" stroke="${stroke}" stroke-width="0.6"/>
-        <rect x="61" y="68" width="10" height="22" rx="3" fill="${skin}" stroke="${stroke}" stroke-width="0.6"/>
+        <rect x="9" y="80" width="11" height="24" rx="3" fill="${skin}" stroke="${stroke}" stroke-width="0.6"/>
+        <rect x="80" y="80" width="11" height="24" rx="3" fill="${skin}" stroke="${stroke}" stroke-width="0.6"/>
 
-        <!-- Ягодицы -->
-        <path d="M28 76 L52 76 L50 92 L30 92 Z" fill="${c('legs')}" stroke="${stroke}" stroke-width="0.8"/>
-
-        <!-- Задняя поверхность бедра -->
-        <path d="M30 92 L28 132 L38 134 L40 92 Z" fill="${c('legs')}" stroke="${stroke}" stroke-width="0.8"/>
-        <path d="M50 92 L52 132 L42 134 L40 92 Z" fill="${c('legs')}" stroke="${stroke}" stroke-width="0.8"/>
+        <!-- Бёдра — те же координаты что спереди -->
+        <path d="M38 96 L34 148 L46 150 L50 96 Z" fill="${c('legs')}" stroke="${stroke}" stroke-width="0.8"/>
+        <path d="M62 96 L66 148 L54 150 L50 96 Z" fill="${c('legs')}" stroke="${stroke}" stroke-width="0.8"/>
 
         <!-- Голени -->
-        <rect x="30" y="134" width="9" height="36" rx="3" fill="${skin}" stroke="${stroke}" stroke-width="0.6"/>
-        <rect x="41" y="134" width="9" height="36" rx="3" fill="${skin}" stroke="${stroke}" stroke-width="0.6"/>
+        <rect x="35" y="150" width="11" height="40" rx="3" fill="${skin}" stroke="${stroke}" stroke-width="0.6"/>
+        <rect x="54" y="150" width="11" height="40" rx="3" fill="${skin}" stroke="${stroke}" stroke-width="0.6"/>
       </svg>
     </div>
   `;
@@ -2388,8 +2405,8 @@ function drawWorkoutSilhouette(ctx, muscles, cx, ty, h, COLORS) {
   const set = new Set(muscles);
   const c = (m) => set.has(m) ? COLORS.accent : COLORS.bgElev3;
 
-  // Размеры одного силуэта (соотношение из SVG 80:180)
-  const figW = h * (80 / 180);
+  // ViewBox 100×200, как в SVG
+  const figW = h * (100 / 200);
   const gap = 60;
   const totalW = figW * 2 + gap;
   const leftX = cx - totalW / 2;
@@ -2398,8 +2415,8 @@ function drawWorkoutSilhouette(ctx, muscles, cx, ty, h, COLORS) {
   ctx.strokeStyle = COLORS.borderStrong;
 
   const drawFigure = (originX, isFront) => {
-    const sx = (n) => originX + (n / 80) * figW;
-    const sy = (n) => ty + (n / 180) * h;
+    const sx = (n) => originX + (n / 100) * figW;
+    const sy = (n) => ty + (n / 200) * h;
 
     const drawShape = (fillColor, pathFn) => {
       ctx.fillStyle = fillColor;
@@ -2421,198 +2438,190 @@ function drawWorkoutSilhouette(ctx, muscles, cx, ty, h, COLORS) {
     // Голова
     ctx.fillStyle = COLORS.bgElev2;
     ctx.beginPath();
-    ctx.arc(sx(40), sy(14), Math.min(figW * 9 / 80, h * 9 / 180), 0, Math.PI * 2);
+    ctx.arc(sx(50), sy(14), Math.min(figW * 8 / 100, h * 8 / 200), 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
 
     // Шея
     ctx.fillStyle = COLORS.bgElev2;
-    ctx.fillRect(sx(36), sy(22), sx(44) - sx(36), sy(27) - sy(22));
+    ctx.fillRect(sx(46), sy(21), sx(54) - sx(46), sy(26) - sy(21));
 
     if (isFront) {
       // ВИД СПЕРЕДИ
-      // Сначала ГРУДЬ (рисуется ПОД плечами)
+      // Грудь — ПОД плечами
       drawShape(c('chest'), () => {
-        ctx.moveTo(sx(28), sy(32));
-        ctx.lineTo(sx(52), sy(32));
-        ctx.lineTo(sx(52), sy(56));
-        ctx.lineTo(sx(40), sy(60));
-        ctx.lineTo(sx(28), sy(56));
+        ctx.moveTo(sx(30), sy(30));
+        ctx.lineTo(sx(50), sy(30));
+        ctx.lineTo(sx(50), sy(58));
+        ctx.lineTo(sx(34), sy(62));
+        ctx.lineTo(sx(30), sy(56));
       });
-      // Линия по центру груди (если активна)
-      if (set.has('chest')) {
-        ctx.strokeStyle = 'rgba(0,0,0,0.5)';
-        ctx.lineWidth = 1.8;
-        ctx.beginPath();
-        ctx.moveTo(sx(40), sy(32));
-        ctx.lineTo(sx(40), sy(58));
-        ctx.stroke();
-        ctx.strokeStyle = COLORS.borderStrong;
-        ctx.lineWidth = 1.5;
-      }
+      drawShape(c('chest'), () => {
+        ctx.moveTo(sx(70), sy(30));
+        ctx.lineTo(sx(50), sy(30));
+        ctx.lineTo(sx(50), sy(58));
+        ctx.lineTo(sx(66), sy(62));
+        ctx.lineTo(sx(70), sy(56));
+      });
 
-      // Плечи (поверх груди — эллипсы)
-      drawEllipse(c('shoulders'), sx(22), sy(36), (sx(30) - sx(14)) / 2, (sy(43) - sy(29)) / 2);
-      drawEllipse(c('shoulders'), sx(58), sy(36), (sx(66) - sx(50)) / 2, (sy(43) - sy(29)) / 2);
+      // Плечи — поверх груди
+      drawEllipse(c('shoulders'), sx(20), sy(36), (sx(31) - sx(9)) / 2, (sy(45) - sy(27)) / 2);
+      drawEllipse(c('shoulders'), sx(80), sy(36), (sx(91) - sx(69)) / 2, (sy(45) - sy(27)) / 2);
 
       // Бицепсы
       drawShape(c('biceps'), () => {
-        ctx.moveTo(sx(14), sy(42));
-        ctx.lineTo(sx(11), sy(66));
-        ctx.lineTo(sx(21), sy(70));
-        ctx.lineTo(sx(24), sy(44));
+        ctx.moveTo(sx(11), sy(44));
+        ctx.lineTo(sx(9), sy(78));
+        ctx.lineTo(sx(22), sy(80));
+        ctx.lineTo(sx(24), sy(46));
       });
       drawShape(c('biceps'), () => {
-        ctx.moveTo(sx(66), sy(42));
-        ctx.lineTo(sx(69), sy(66));
-        ctx.lineTo(sx(59), sy(70));
-        ctx.lineTo(sx(56), sy(44));
+        ctx.moveTo(sx(89), sy(44));
+        ctx.lineTo(sx(91), sy(78));
+        ctx.lineTo(sx(78), sy(80));
+        ctx.lineTo(sx(76), sy(46));
       });
 
-      // Пресс
+      // Пресс / кор
       drawShape(c('core'), () => {
-        ctx.moveTo(sx(30), sy(60));
-        ctx.lineTo(sx(50), sy(60));
-        ctx.lineTo(sx(48), sy(88));
-        ctx.lineTo(sx(32), sy(88));
+        ctx.moveTo(sx(34), sy(62));
+        ctx.lineTo(sx(66), sy(62));
+        ctx.lineTo(sx(62), sy(96));
+        ctx.lineTo(sx(38), sy(96));
       });
       if (set.has('core')) {
-        ctx.strokeStyle = 'rgba(0,0,0,0.45)';
+        ctx.strokeStyle = 'rgba(0,0,0,0.4)';
         ctx.lineWidth = 1.5;
         ctx.beginPath();
-        ctx.moveTo(sx(40), sy(62)); ctx.lineTo(sx(40), sy(86));
-        ctx.moveTo(sx(32), sy(70)); ctx.lineTo(sx(48), sy(70));
-        ctx.moveTo(sx(32), sy(78)); ctx.lineTo(sx(48), sy(78));
+        ctx.moveTo(sx(50), sy(64)); ctx.lineTo(sx(50), sy(94));
+        ctx.moveTo(sx(40), sy(74)); ctx.lineTo(sx(60), sy(74));
+        ctx.moveTo(sx(40), sy(84)); ctx.lineTo(sx(60), sy(84));
         ctx.stroke();
         ctx.strokeStyle = COLORS.borderStrong;
         ctx.lineWidth = 1.5;
       }
 
-      // Бёдра/квадрицепсы
+      // Бёдра / квадрицепсы
       drawShape(c('legs'), () => {
-        ctx.moveTo(sx(32), sy(88));
-        ctx.lineTo(sx(30), sy(132));
-        ctx.lineTo(sx(38), sy(134));
-        ctx.lineTo(sx(40), sy(88));
+        ctx.moveTo(sx(38), sy(96));
+        ctx.lineTo(sx(34), sy(148));
+        ctx.lineTo(sx(46), sy(150));
+        ctx.lineTo(sx(50), sy(96));
       });
       drawShape(c('legs'), () => {
-        ctx.moveTo(sx(48), sy(88));
-        ctx.lineTo(sx(50), sy(132));
-        ctx.lineTo(sx(42), sy(134));
-        ctx.lineTo(sx(40), sy(88));
+        ctx.moveTo(sx(62), sy(96));
+        ctx.lineTo(sx(66), sy(148));
+        ctx.lineTo(sx(54), sy(150));
+        ctx.lineTo(sx(50), sy(96));
       });
     } else {
       // ВИД СЗАДИ
-      // СПИНА: 4 зоны (трапеции, верх, широчайшие, поясница)
-      // Трапеции
+      // СПИНА: 4 зоны V-формы до y=80
       drawShape(c('back'), () => {
-        ctx.moveTo(sx(30), sy(32));
-        ctx.lineTo(sx(50), sy(32));
-        ctx.lineTo(sx(48), sy(44));
+        ctx.moveTo(sx(30), sy(30));
+        ctx.lineTo(sx(70), sy(30));
+        ctx.lineTo(sx(68), sy(44));
         ctx.lineTo(sx(32), sy(44));
       });
-      // Верх спины
       drawShape(c('back'), () => {
         ctx.moveTo(sx(32), sy(44));
-        ctx.lineTo(sx(48), sy(44));
-        ctx.lineTo(sx(48), sy(56));
-        ctx.lineTo(sx(32), sy(56));
+        ctx.lineTo(sx(68), sy(44));
+        ctx.lineTo(sx(67), sy(60));
+        ctx.lineTo(sx(33), sy(60));
       });
-      // Широчайшие (V-форма)
       drawShape(c('back'), () => {
-        ctx.moveTo(sx(32), sy(56));
-        ctx.lineTo(sx(48), sy(56));
-        ctx.lineTo(sx(51), sy(70));
-        ctx.lineTo(sx(29), sy(70));
+        ctx.moveTo(sx(33), sy(60));
+        ctx.lineTo(sx(67), sy(60));
+        ctx.lineTo(sx(65), sy(80));
+        ctx.lineTo(sx(35), sy(80));
       });
-      // Поясница
-      drawShape(c('back'), () => {
-        ctx.moveTo(sx(29), sy(70));
-        ctx.lineTo(sx(51), sy(70));
-        ctx.lineTo(sx(52), sy(76));
-        ctx.lineTo(sx(28), sy(76));
+      // Ягодицы — занимают зону 80-96
+      drawShape(c('legs'), () => {
+        ctx.moveTo(sx(35), sy(80));
+        ctx.lineTo(sx(65), sy(80));
+        ctx.lineTo(sx(62), sy(96));
+        ctx.lineTo(sx(38), sy(96));
       });
-      // Центральная линия позвоночника (всегда видна)
-      ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+
+      // Линия позвоночника + граница низа спины
+      ctx.strokeStyle = 'rgba(0,0,0,0.45)';
       ctx.lineWidth = 1.2;
       ctx.beginPath();
-      ctx.moveTo(sx(40), sy(32));
-      ctx.lineTo(sx(40), sy(76));
+      ctx.moveTo(sx(50), sy(30));
+      ctx.lineTo(sx(50), sy(80));
       ctx.stroke();
-      // Дуги лопаток только если активна
+      ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(sx(38), sy(80));
+      ctx.lineTo(sx(62), sy(80));
+      ctx.stroke();
+      // Лопатки если активна
       if (set.has('back')) {
-        ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+        ctx.strokeStyle = 'rgba(0,0,0,0.35)';
         ctx.lineWidth = 1.2;
         ctx.beginPath();
-        ctx.moveTo(sx(33), sy(46));
-        ctx.quadraticCurveTo(sx(36), sy(51), sx(39), sy(50));
-        ctx.moveTo(sx(47), sy(46));
-        ctx.quadraticCurveTo(sx(44), sy(51), sx(41), sy(50));
+        ctx.moveTo(sx(40), sy(50));
+        ctx.quadraticCurveTo(sx(44), sy(56), sx(48), sy(56));
+        ctx.moveTo(sx(60), sy(50));
+        ctx.quadraticCurveTo(sx(56), sy(56), sx(52), sy(56));
         ctx.stroke();
       }
       ctx.strokeStyle = COLORS.borderStrong;
       ctx.lineWidth = 1.5;
 
-      // Плечи (поверх спины)
-      drawEllipse(c('shoulders'), sx(22), sy(36), (sx(30) - sx(14)) / 2, (sy(43) - sy(29)) / 2);
-      drawEllipse(c('shoulders'), sx(58), sy(36), (sx(66) - sx(50)) / 2, (sy(43) - sy(29)) / 2);
+      // Плечи — поверх спины
+      drawEllipse(c('shoulders'), sx(20), sy(36), (sx(31) - sx(9)) / 2, (sy(45) - sy(27)) / 2);
+      drawEllipse(c('shoulders'), sx(80), sy(36), (sx(91) - sx(69)) / 2, (sy(45) - sy(27)) / 2);
 
       // Трицепсы
       drawShape(c('triceps'), () => {
-        ctx.moveTo(sx(14), sy(42));
-        ctx.lineTo(sx(11), sy(66));
-        ctx.lineTo(sx(21), sy(70));
-        ctx.lineTo(sx(24), sy(44));
+        ctx.moveTo(sx(11), sy(44));
+        ctx.lineTo(sx(9), sy(78));
+        ctx.lineTo(sx(22), sy(80));
+        ctx.lineTo(sx(24), sy(46));
       });
       drawShape(c('triceps'), () => {
-        ctx.moveTo(sx(66), sy(42));
-        ctx.lineTo(sx(69), sy(66));
-        ctx.lineTo(sx(59), sy(70));
-        ctx.lineTo(sx(56), sy(44));
+        ctx.moveTo(sx(89), sy(44));
+        ctx.lineTo(sx(91), sy(78));
+        ctx.lineTo(sx(78), sy(80));
+        ctx.lineTo(sx(76), sy(46));
       });
 
-      // Ягодицы
+      // Бёдра — те же координаты что спереди
       drawShape(c('legs'), () => {
-        ctx.moveTo(sx(28), sy(76));
-        ctx.lineTo(sx(52), sy(76));
-        ctx.lineTo(sx(50), sy(92));
-        ctx.lineTo(sx(30), sy(92));
-      });
-      // Задняя поверхность бедра
-      drawShape(c('legs'), () => {
-        ctx.moveTo(sx(30), sy(92));
-        ctx.lineTo(sx(28), sy(132));
-        ctx.lineTo(sx(38), sy(134));
-        ctx.lineTo(sx(40), sy(92));
+        ctx.moveTo(sx(38), sy(96));
+        ctx.lineTo(sx(34), sy(148));
+        ctx.lineTo(sx(46), sy(150));
+        ctx.lineTo(sx(50), sy(96));
       });
       drawShape(c('legs'), () => {
-        ctx.moveTo(sx(50), sy(92));
-        ctx.lineTo(sx(52), sy(132));
-        ctx.lineTo(sx(42), sy(134));
-        ctx.lineTo(sx(40), sy(92));
+        ctx.moveTo(sx(62), sy(96));
+        ctx.lineTo(sx(66), sy(148));
+        ctx.lineTo(sx(54), sy(150));
+        ctx.lineTo(sx(50), sy(96));
       });
     }
 
     // Предплечья (одинаково front/back)
     ctx.fillStyle = COLORS.bgElev2;
-    roundRect(ctx, sx(9), sy(68), sx(19) - sx(9), sy(90) - sy(68), 4);
+    roundRect(ctx, sx(9), sy(80), sx(20) - sx(9), sy(104) - sy(80), 4);
     ctx.fill();
     ctx.stroke();
-    roundRect(ctx, sx(61), sy(68), sx(71) - sx(61), sy(90) - sy(68), 4);
+    roundRect(ctx, sx(80), sy(80), sx(91) - sx(80), sy(104) - sy(80), 4);
     ctx.fill();
     ctx.stroke();
 
-    // Голени
+    // Голени (одинаково front/back)
     ctx.fillStyle = COLORS.bgElev2;
-    roundRect(ctx, sx(30), sy(134), sx(39) - sx(30), sy(170) - sy(134), 4);
+    roundRect(ctx, sx(35), sy(150), sx(46) - sx(35), sy(190) - sy(150), 4);
     ctx.fill();
     ctx.stroke();
-    roundRect(ctx, sx(41), sy(134), sx(50) - sx(41), sy(170) - sy(134), 4);
+    roundRect(ctx, sx(54), sy(150), sx(65) - sx(54), sy(190) - sy(150), 4);
     ctx.fill();
     ctx.stroke();
   };
 
-  // Рисуем спереди и сзади
   drawFigure(leftX, true);
   drawFigure(leftX + figW + gap, false);
 }

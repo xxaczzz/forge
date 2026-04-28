@@ -14,7 +14,7 @@
  */
 
 // Версия билда — меняется при каждом релизе
-const BUILD_VERSION = '2026-04-29-1100';
+const BUILD_VERSION = '2026-04-29-1500';
 const CACHE_NAME = `forge-${BUILD_VERSION}`;
 
 // Файлы для предкэша при установке

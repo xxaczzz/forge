@@ -722,78 +722,55 @@ function muscleBodySVG(fatigue) {
   `;
 }
 
-// ============== MORNING ROUTINES (программы зарядки) ==============
-// Каждая программа — массив шагов, каждый шаг ссылается на упражнение из EXERCISES
-// duration — секунды для timed упражнений, reps — для повторов
+// ============== MORNING PROGRAM (единая программа зарядки) ==============
+// Все упражнения идут подряд. Юзер выбирает в моменте — делать или скипнуть.
 // Между шагами автоматически добавляется "Get ready" пауза
 const ROUTINE_GET_READY_SEC = 15;
 
-const ROUTINES = [
-  {
-    id: 'energizer',
-    name: 'Energizer',
-    icon: '⚡',
-    description: 'Quick wake-up',
-    steps: [
-      { exerciseId: 'arm-circles', duration: 30 },
-      { exerciseId: 'cat-cow', duration: 30 },
-      { exerciseId: 'bw-squat', reps: 10 },
-      { exerciseId: 'shoulder-rolls', duration: 30 },
-      { exerciseId: 'jumping-jacks', duration: 45 }
-    ]
-  },
-  {
-    id: 'mobility',
-    name: 'Mobility & Flow',
-    icon: '🧘',
-    description: 'Stretch and breathe',
-    steps: [
-      { exerciseId: 'cat-cow', duration: 30 },
-      { exerciseId: 'world-greatest', duration: 30 },
-      { exerciseId: 'inchworm', reps: 8 },
-      { exerciseId: 'bird-dog', reps: 10 },
-      { exerciseId: 'cobra-stretch', duration: 30 },
-      { exerciseId: 'child-pose', duration: 30 },
-      { exerciseId: 'forward-fold', duration: 30 },
-      { exerciseId: 'shoulder-rolls', duration: 30 },
-      { exerciseId: 'arm-circles', duration: 30 }
-    ]
-  },
-  {
-    id: 'strong-start',
-    name: 'Strong Start',
-    icon: '💪',
-    description: 'Active wake-up',
-    steps: [
-      { exerciseId: 'cat-cow', duration: 30 },
-      { exerciseId: 'banded-walk', reps: 12 },
-      { exerciseId: 'bw-squat', reps: 15 },
-      { exerciseId: 'pull-apart', reps: 15 },
-      { exerciseId: 'pushup', reps: 10 },
-      { exerciseId: 'dead-bug', reps: 10 },
-      { exerciseId: 'bird-dog', reps: 10 },
-      { exerciseId: 'plank', duration: 30 },
-      { exerciseId: 'jumping-jacks', duration: 45 }
-    ]
-  }
-];
-
-// Расчёт общей длительности программы в секундах
-function routineDurationSec(routine) {
-  // Каждый шаг + пауза между шагами (кроме после последнего)
-  let total = 0;
-  routine.steps.forEach((step, i) => {
-    // Для повторов считаем ~3 сек/повтор как примерную оценку
-    const stepSec = step.duration || (step.reps * 3);
-    total += stepSec;
-    if (i < routine.steps.length - 1) total += ROUTINE_GET_READY_SEC;
-  });
-  return total;
-}
+const MORNING_PROGRAM = {
+  id: 'morning',
+  name: 'Morning Routine',
+  icon: '🌅',
+  description: 'Wake up your body',
+  steps: [
+    // Разминка позвоночника и суставов
+    { exerciseId: 'cat-cow', duration: 30 },
+    { exerciseId: 'arm-circles', duration: 30 },
+    { exerciseId: 'shoulder-rolls', duration: 30 },
+    // Растяжка и мобилити
+    { exerciseId: 'world-greatest', duration: 30 },
+    { exerciseId: 'inchworm', reps: 8 },
+    { exerciseId: 'bird-dog', reps: 10 },
+    { exerciseId: 'dead-bug', reps: 10 },
+    { exerciseId: 'cobra-stretch', duration: 30 },
+    { exerciseId: 'child-pose', duration: 30 },
+    { exerciseId: 'forward-fold', duration: 30 },
+    // Активация мышц
+    { exerciseId: 'banded-walk', reps: 12 },
+    { exerciseId: 'pull-apart', reps: 15 },
+    // Силовые
+    { exerciseId: 'bw-squat', reps: 15 },
+    { exerciseId: 'pushup', reps: 10 },
+    { exerciseId: 'plank', duration: 30 },
+    // Кардио в конце
+    { exerciseId: 'jumping-jacks', duration: 45 }
+  ]
+};
 
 // Получить определение упражнения для шага зарядки
 function routineStepExercise(step) {
   return EXERCISES.find(e => e.id === step.exerciseId);
+}
+
+// Расчёт максимальной длительности программы в секундах (если делать всё)
+function programDurationSec(program) {
+  let total = 0;
+  program.steps.forEach((step, i) => {
+    const stepSec = step.duration || (step.reps * 3);
+    total += stepSec;
+    if (i < program.steps.length - 1) total += ROUTINE_GET_READY_SEC;
+  });
+  return total;
 }
 
 // ============== ONBOARDING ==============
@@ -1727,7 +1704,20 @@ function dateKey(d) {
   return `${y}-${m}-${day}`;
 }
 
-// Пересчёт стрика после новой зарядки
+// Извлекаем массив сделанных id (новый формат) — поддерживая старые записи v2
+function getCompletedIds(record) {
+  if (Array.isArray(record.completedExerciseIds)) return record.completedExerciseIds;
+  return [];
+}
+
+// Считает количество сделанных упражнений (для совместимости со старыми записями v2)
+function getCompletedCount(record) {
+  if (Array.isArray(record.completedExerciseIds)) return record.completedExerciseIds.length;
+  if (typeof record.completedExercises === 'number') return record.completedExercises;
+  return 0;
+}
+
+// Пересчёт стрика после новой зарядки (если хотя бы 1 упражнение сделано)
 function updateMorningStreakAfterRoutine() {
   const today = dateKey();
   if (STATE.morningLastDate === today) {
@@ -1747,11 +1737,14 @@ function updateMorningStreakAfterRoutine() {
   STATE.morningLastDate = today;
 }
 
-// Главный экран Morning
+// Главный экран Morning — единая программа
 function renderMorningHome() {
   const todayKey = dateKey();
   const doneToday = STATE.morningLastDate === todayKey;
   const recent = (STATE.routines || []).slice(-5).reverse();
+  const program = MORNING_PROGRAM;
+  const totalSec = programDurationSec(program);
+  const min = Math.ceil(totalSec / 60);
 
   render(`
     <div class="screen">
@@ -1773,26 +1766,37 @@ function renderMorningHome() {
         </div>
       ` : ''}
 
-      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">Choose a routine</div>
+      <!-- Главная карточка единой программы -->
+      <div style="background:var(--bg-elev);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+          <div style="font-size:36px;">${program.icon}</div>
+          <div style="flex:1;">
+            <div style="font-family:var(--font-display);font-size:22px;">${program.name}</div>
+            <div style="font-size:12px;color:var(--text-dim);">${program.description}</div>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono);margin-bottom:16px;">
+          ${program.steps.length} exercises • up to ~${min} min · skip what you don't need
+        </div>
+        <button class="btn btn-primary btn-block" onclick="startRoutine()">
+          START ROUTINE →
+        </button>
+      </div>
 
-      ${ROUTINES.map(routine => {
-        const totalSec = routineDurationSec(routine);
-        const min = Math.ceil(totalSec / 60);
+      <!-- Список упражнений до запуска -->
+      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">
+        Today's exercises
+      </div>
+      ${program.steps.map((step, i) => {
+        const ex = routineStepExercise(step);
+        if (!ex) return '';
+        const detail = step.duration ? `${step.duration}s` : `×${step.reps}`;
         return `
-          <button onclick="openRoutinePreview('${routine.id}')"
-                  style="width:100%;text-align:left;cursor:pointer;border:1px solid var(--border);background:var(--bg-elev);border-radius:14px;padding:16px;margin-bottom:12px;color:var(--text);font-family:inherit;">
-            <div style="display:flex;align-items:center;gap:12px;">
-              <div style="font-size:28px;">${routine.icon}</div>
-              <div style="flex:1;">
-                <div style="font-family:var(--font-display);font-size:18px;color:var(--text);">${routine.name}</div>
-                <div style="font-size:12px;color:var(--text-dim);">${routine.description}</div>
-                <div style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono);margin-top:4px;">
-                  ${routine.steps.length} exercises • ~${min} min
-                </div>
-              </div>
-              <div style="color:var(--text-muted);">›</div>
-            </div>
-          </button>
+          <div style="background:var(--bg-elev-2);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:6px;display:flex;align-items:center;gap:10px;">
+            <div style="width:28px;height:28px;border-radius:6px;background:var(--bg-elev-3);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:12px;color:var(--accent);">${i + 1}</div>
+            <div style="flex:1;font-size:13px;">${ex.name}</div>
+            <div style="font-family:var(--font-mono);font-size:12px;color:var(--text-muted);">${detail}</div>
+          </div>
         `;
       }).join('')}
 
@@ -1800,16 +1804,21 @@ function renderMorningHome() {
         <div style="margin-top:24px;">
           <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">Recent</div>
           ${recent.map(r => {
-            const routine = ROUTINES.find(x => x.id === r.programId);
             const date = new Date(r.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
             const min = Math.round(r.duration / 60);
             const minDisplay = min < 1 ? '<1m' : `${min}m`;
+            const completedCount = getCompletedCount(r);
             return `
-              <button onclick="openRoutineSummary('${r.id}')" style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:12px 8px;background:transparent;border:none;border-bottom:1px solid var(--border);font-size:13px;cursor:pointer;color:var(--text);font-family:inherit;">
-                <span style="color:var(--text-dim);">${date.toUpperCase()}</span>
-                <span>${routine ? routine.icon + ' ' + routine.name : 'Routine'}</span>
-                <span style="color:var(--text-muted);font-family:var(--font-mono);">${minDisplay}</span>
-              </button>
+              <div style="display:flex;align-items:center;gap:8px;padding:10px 8px;border-bottom:1px solid var(--border);">
+                <button onclick="openRoutineSummary('${r.id}')" style="flex:1;display:flex;justify-content:space-between;align-items:center;background:transparent;border:none;font-size:13px;cursor:pointer;color:var(--text);font-family:inherit;text-align:left;padding:0;">
+                  <span style="color:var(--text-dim);min-width:60px;">${date.toUpperCase()}</span>
+                  <span style="flex:1;text-align:center;">🌅 ${completedCount}/16</span>
+                  <span style="color:var(--text-muted);font-family:var(--font-mono);">${minDisplay}</span>
+                </button>
+                <button onclick="event.stopPropagation();shareRoutineById('${r.id}')" aria-label="Share" style="background:transparent;border:none;cursor:pointer;padding:6px;color:var(--text-muted);display:flex;align-items:center;justify-content:center;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                </button>
+              </div>
             `;
           }).join('')}
         </div>
@@ -1818,83 +1827,20 @@ function renderMorningHome() {
   `);
 }
 
-// Превью программы
-function renderRoutinePreview() {
-  const routineId = window._routineId;
-  const routine = ROUTINES.find(r => r.id === routineId);
-  if (!routine) {
-    STATE.view = 'morning';
-    renderApp();
-    return;
-  }
-  const totalSec = routineDurationSec(routine);
-  const min = Math.ceil(totalSec / 60);
-
-  render(`
-    <div class="screen">
-      <div class="header" style="margin-bottom:16px;">
-        <button class="btn btn-secondary" style="padding:8px 12px;font-size:13px;" onclick="STATE.view='morning';renderApp()">← Back</button>
-      </div>
-
-      <div style="text-align:center;margin-bottom:24px;">
-        <div style="font-size:48px;margin-bottom:8px;">${routine.icon}</div>
-        <div style="font-family:var(--font-display);font-size:32px;">${routine.name}</div>
-        <div style="color:var(--text-dim);margin-top:4px;">${routine.description}</div>
-        <div style="font-size:12px;color:var(--text-muted);font-family:var(--font-mono);margin-top:8px;">
-          ${routine.steps.length} exercises • ~${min} min
-        </div>
-      </div>
-
-      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">Exercises</div>
-
-      ${routine.steps.map((step, i) => {
-        const ex = routineStepExercise(step);
-        if (!ex) return '';
-        const detail = step.duration
-          ? `${step.duration}s`
-          : `×${step.reps}`;
-        return `
-          <div style="background:var(--bg-elev);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:8px;">
-            <div style="display:flex;align-items:center;gap:12px;">
-              <div style="width:36px;height:36px;border-radius:8px;background:var(--bg-elev-3);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:14px;color:var(--accent);">
-                ${i + 1}
-              </div>
-              <div style="flex:1;">
-                <div style="font-weight:600;">${ex.name}</div>
-              </div>
-              <div style="font-family:var(--font-mono);font-size:13px;color:var(--text-dim);">${detail}</div>
-            </div>
-          </div>
-        `;
-      }).join('')}
-
-      <button class="btn btn-primary" style="width:100%;margin-top:24px;" onclick="startRoutine('${routine.id}')">
-        START ROUTINE →
-      </button>
-    </div>
-  `);
-}
-
-// Открытие превью из главного
-function openRoutinePreview(routineId) {
-  window._routineId = routineId;
-  STATE.view = 'routine-preview';
-  renderApp();
-}
-
-// Запуск зарядки
-function startRoutine(routineId) {
-  const routine = ROUTINES.find(r => r.id === routineId);
-  if (!routine) return;
+// Запуск зарядки (программа всегда одна — MORNING_PROGRAM)
+function startRoutine() {
+  const program = MORNING_PROGRAM;
   STATE.currentRoutine = {
-    routineId: routine.id,
-    stepIndex: 0,           // текущий шаг
-    phase: 'exercise',      // 'exercise' | 'rest'
-    timeLeft: routine.steps[0].duration || null,  // null для упражнений с повторами
-    totalSteps: routine.steps.length,
+    programId: program.id,
+    stepIndex: 0,                    // текущий шаг
+    phase: 'exercise',               // 'exercise' | 'rest'
+    timeLeft: program.steps[0].duration || null,  // null для упражнений с повторами
+    totalSteps: program.steps.length,
     startedAt: Date.now(),
     paused: false,
-    interval: null
+    interval: null,
+    completedIds: [],                // id успешно сделанных упражнений
+    skippedIds: []                   // id скипнутых
   };
   STATE.view = 'routine-player';
   renderApp();
@@ -1917,7 +1863,13 @@ function startRoutineTimer() {
       clearInterval(r.interval);
       r.interval = null;
       playTimerEndSignal();
-      // Автопереход к следующему шагу
+      // Автопереход к следующему шагу — таймер на упражнении истёк = упражнение сделано
+      if (r.phase === 'exercise') {
+        const step = MORNING_PROGRAM.steps[r.stepIndex];
+        if (step && !r.completedIds.includes(step.exerciseId)) {
+          r.completedIds.push(step.exerciseId);
+        }
+      }
       routineNextStep();
     }
   }, 1000);
@@ -1934,8 +1886,7 @@ function updateRoutinePlayerTimer() {
   // Прогрессбар таймера
   const ring = document.getElementById('routine-timer-ring');
   if (ring && r.timeLeft !== null) {
-    const routine = ROUTINES.find(x => x.id === r.routineId);
-    const step = routine.steps[r.stepIndex];
+    const step = MORNING_PROGRAM.steps[r.stepIndex];
     const totalForStep = r.phase === 'rest' ? ROUTINE_GET_READY_SEC : (step.duration || 0);
     if (totalForStep > 0) {
       const fraction = r.timeLeft / totalForStep;
@@ -1949,12 +1900,11 @@ function updateRoutinePlayerTimer() {
 function routineNextStep() {
   const r = STATE.currentRoutine;
   if (!r) return;
-  const routine = ROUTINES.find(x => x.id === r.routineId);
-  if (!routine) return;
+  const program = MORNING_PROGRAM;
 
   if (r.phase === 'exercise') {
     // После упражнения: либо отдых перед следующим, либо завершение
-    if (r.stepIndex >= routine.steps.length - 1) {
+    if (r.stepIndex >= program.steps.length - 1) {
       // Это было последнее упражнение → финиш
       finishRoutine();
       return;
@@ -1968,7 +1918,7 @@ function routineNextStep() {
     // После отдыха: следующее упражнение
     r.stepIndex += 1;
     r.phase = 'exercise';
-    const nextStep = routine.steps[r.stepIndex];
+    const nextStep = program.steps[r.stepIndex];
     r.timeLeft = nextStep.duration || null;
     renderApp();
     if (r.timeLeft) startRoutineTimer();
@@ -1979,38 +1929,44 @@ function routineNextStep() {
 function finishRoutine() {
   const r = STATE.currentRoutine;
   if (!r) return;
-  const routine = ROUTINES.find(x => x.id === r.routineId);
   if (r.interval) { clearInterval(r.interval); r.interval = null; }
 
   const completedAt = Date.now();
   const duration = Math.round((completedAt - r.startedAt) / 1000);
 
-  // Сохраняем в STATE.routines
+  // Сохраняем в STATE.routines (новый формат v3)
   const record = {
     id: 'r-' + completedAt,
-    programId: r.routineId,
+    programId: r.programId,
     timestamp: completedAt,
     duration: duration,
-    completedExercises: r.stepIndex + 1
+    completedExerciseIds: [...r.completedIds],
+    skippedExerciseIds: [...r.skippedIds]
   };
   STATE.routines = STATE.routines || [];
   STATE.routines.push(record);
 
-  // Стрик
-  updateMorningStreakAfterRoutine();
+  // Стрик считается если хотя бы 1 упражнение сделано
+  if (r.completedIds.length > 0) {
+    updateMorningStreakAfterRoutine();
+  }
 
   // Сохраняем
   save();
 
   // Сводка
   STATE.currentRoutine = null;
-  showRoutineSummary(record, routine);
+  showRoutineSummary(record);
 }
 
 // Прерывание (пользователь нажал Exit)
 function exitRoutine() {
   if (!STATE.currentRoutine) return;
   const r = STATE.currentRoutine;
+  // Если что-то уже сделал — спросим точно ли выйти
+  if (r.completedIds.length > 0) {
+    if (!confirm('Exit and lose progress? Your routine is not yet saved.')) return;
+  }
   if (r.interval) clearInterval(r.interval);
   STATE.currentRoutine = null;
   STATE.view = 'morning';
@@ -2018,16 +1974,38 @@ function exitRoutine() {
   toast('Routine cancelled');
 }
 
-// Skip — переход вручную
-function skipRoutineStep() {
+// Skip-упражнение (пользователь решил не делать)
+function skipExercise() {
   const r = STATE.currentRoutine;
   if (!r) return;
+  if (r.phase === 'exercise') {
+    const step = MORNING_PROGRAM.steps[r.stepIndex];
+    if (step && !r.skippedIds.includes(step.exerciseId)) {
+      r.skippedIds.push(step.exerciseId);
+    }
+  }
   if (r.interval) { clearInterval(r.interval); r.interval = null; }
   routineNextStep();
 }
 
-// Кнопка "next" для упражнений с повторами (когда таймера нет)
-function manualNextStep() {
+// Кнопка "DONE" для упражнений с повторами (когда таймера нет)
+function markExerciseDone() {
+  const r = STATE.currentRoutine;
+  if (!r) return;
+  if (r.phase === 'exercise') {
+    const step = MORNING_PROGRAM.steps[r.stepIndex];
+    if (step && !r.completedIds.includes(step.exerciseId)) {
+      r.completedIds.push(step.exerciseId);
+    }
+  }
+  routineNextStep();
+}
+
+// Skip rest-фазы (между упражнениями) — сразу к следующему
+function skipRestPhase() {
+  const r = STATE.currentRoutine;
+  if (!r) return;
+  if (r.interval) { clearInterval(r.interval); r.interval = null; }
   routineNextStep();
 }
 
@@ -2049,15 +2027,11 @@ function renderRoutinePlayer() {
     renderApp();
     return;
   }
-  const routine = ROUTINES.find(x => x.id === r.routineId);
-  if (!routine) {
-    exitRoutine();
-    return;
-  }
+  const program = MORNING_PROGRAM;
 
   if (r.phase === 'rest') {
     // Экран отдыха
-    const next = routine.steps[r.stepIndex + 1];
+    const next = program.steps[r.stepIndex + 1];
     const nextEx = next ? routineStepExercise(next) : null;
     render(`
       <div class="screen" style="background:var(--bg);">
@@ -2078,7 +2052,7 @@ function renderRoutinePlayer() {
 
           <div style="margin-top:32px;display:flex;gap:8px;justify-content:center;">
             <button class="btn btn-secondary" id="routine-pause-btn" onclick="toggleRoutinePause()" style="min-width:60px;">⏸</button>
-            <button class="btn btn-primary" onclick="skipRoutineStep()">SKIP →</button>
+            <button class="btn btn-primary" onclick="skipRestPhase()">SKIP REST →</button>
           </div>
         </div>
       </div>
@@ -2087,7 +2061,7 @@ function renderRoutinePlayer() {
   }
 
   // Экран упражнения
-  const step = routine.steps[r.stepIndex];
+  const step = program.steps[r.stepIndex];
   const ex = routineStepExercise(step);
   if (!ex) {
     exitRoutine();
@@ -2095,13 +2069,15 @@ function renderRoutinePlayer() {
   }
 
   const isTimed = !!step.duration;
+  const completedCount = r.completedIds.length;
+  const skippedCount = r.skippedIds.length;
 
   render(`
     <div class="screen" style="background:var(--bg);">
       <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0 16px;">
         <button class="btn btn-secondary" style="padding:6px 12px;font-size:12px;" onclick="exitRoutine()">✕ Exit</button>
         <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted);">
-          STEP ${r.stepIndex + 1} OF ${r.totalSteps}
+          ${r.stepIndex + 1} / ${r.totalSteps} · ✓${completedCount} ✕${skippedCount}
         </div>
       </div>
 
@@ -2140,11 +2116,13 @@ function renderRoutinePlayer() {
           ${ex.description}
         </div>
 
+        <!-- 3 кнопки: Pause / Skip / Done(или авто-таймер для timed) -->
         <div style="display:flex;gap:8px;">
           <button class="btn btn-secondary" id="routine-pause-btn" onclick="toggleRoutinePause()" style="min-width:60px;">⏸</button>
+          <button class="btn btn-secondary" style="flex:1;" onclick="skipExercise()">SKIP</button>
           ${isTimed
-            ? `<button class="btn btn-secondary" style="flex:1;" onclick="skipRoutineStep()">SKIP →</button>`
-            : `<button class="btn btn-primary" style="flex:1;" onclick="manualNextStep()">DONE →</button>`
+            ? ''
+            : `<button class="btn btn-primary" style="flex:1;" onclick="markExerciseDone()">DONE →</button>`
           }
         </div>
       </div>
@@ -2173,18 +2151,22 @@ function routineTimerCircle(timeLeft, totalSec) {
   `;
 }
 
-// Сводка после зарядки
-function showRoutineSummary(record, routine) {
+// Сводка после новой зарядки
+function showRoutineSummary(record) {
+  const program = MORNING_PROGRAM;
   const min = Math.round(record.duration / 60);
   const minDisplay = min < 1 ? '<1' : min;
-  // Сохраняю id чтобы из onclick шеринга можно было его подцепить
+  const completedCount = getCompletedCount(record);
+  // Сохраняю id для шеринга
   window._lastRoutineRecord = record;
 
   openModal(`
     <div style="text-align:center;">
-      <div style="font-size:48px;margin-bottom:8px;">${routine ? routine.icon : '🌅'}</div>
+      <div style="font-size:48px;margin-bottom:8px;">${program.icon}</div>
       <div style="font-family:var(--font-display);font-size:28px;color:var(--accent);margin-bottom:4px;">DONE!</div>
-      <div style="color:var(--text-dim);margin-bottom:24px;">${routine ? routine.name : 'Routine'} — ${minDisplay} min</div>
+      <div style="color:var(--text-dim);margin-bottom:24px;">
+        ${completedCount} ${completedCount === 1 ? 'exercise' : 'exercises'} done · ${minDisplay} min
+      </div>
 
       ${STATE.morningStreak > 1 ? `
         <div style="background:var(--bg-elev);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:24px;">
@@ -2192,16 +2174,21 @@ function showRoutineSummary(record, routine) {
           <div style="font-family:var(--font-display);font-size:32px;color:var(--accent);">${STATE.morningStreak}</div>
           <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.1em;">days in a row</div>
         </div>
-      ` : `
+      ` : (completedCount > 0 ? `
         <div style="background:var(--bg-elev);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:24px;">
           <div style="font-size:32px;">🎉</div>
           <div style="font-family:var(--font-display);font-size:18px;color:var(--accent);margin-top:4px;">First day done</div>
           <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.1em;">come back tomorrow</div>
         </div>
-      `}
+      ` : `
+        <div style="background:var(--bg-elev);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:24px;">
+          <div style="font-size:14px;color:var(--text-dim);">No exercises completed</div>
+          <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.1em;margin-top:4px;">streak not counted</div>
+        </div>
+      `)}
 
       <div style="display:flex;gap:8px;">
-        <button class="btn btn-secondary" style="flex:1;" onclick="shareRoutine(window._lastRoutineRecord)">SHARE</button>
+        ${completedCount > 0 ? `<button class="btn btn-secondary" style="flex:1;" onclick="shareRoutine(window._lastRoutineRecord)">SHARE</button>` : ''}
         <button class="btn btn-primary" style="flex:1;" onclick="closeModal();STATE.view='morning';renderApp()">DONE</button>
       </div>
     </div>
@@ -2212,31 +2199,40 @@ function showRoutineSummary(record, routine) {
 function openRoutineSummary(recordId) {
   const record = (STATE.routines || []).find(r => r.id === recordId);
   if (!record) return;
-  const routine = ROUTINES.find(r => r.id === record.programId);
+  const program = MORNING_PROGRAM;
   const min = Math.round(record.duration / 60);
   const minDisplay = min < 1 ? '<1' : min;
   const dateStr = new Date(record.timestamp).toLocaleDateString('en-US', {
     day: 'numeric', month: 'long', year: 'numeric'
   });
+  const completedIds = getCompletedIds(record);
+  const completedCount = getCompletedCount(record);
 
   window._lastRoutineRecord = record;
+
+  // Показываем сделанные упражнения; если запись старая (v2) — показываем все из текущей программы
+  const isLegacy = !Array.isArray(record.completedExerciseIds);
 
   openModal(`
     <div style="text-align:center;">
       <div class="eyebrow" style="text-align:center;">${dateStr}</div>
-      <div style="font-size:48px;margin:8px 0;">${routine ? routine.icon : '🌅'}</div>
-      <div style="font-family:var(--font-display);font-size:24px;margin-bottom:4px;">${routine ? routine.name : 'Routine'}</div>
-      <div style="color:var(--text-dim);font-size:14px;margin-bottom:16px;">${minDisplay} min · ${record.completedExercises} exercises</div>
+      <div style="font-size:48px;margin:8px 0;">${program.icon}</div>
+      <div style="font-family:var(--font-display);font-size:24px;margin-bottom:4px;">Morning Routine</div>
+      <div style="color:var(--text-dim);font-size:14px;margin-bottom:16px;">
+        ${minDisplay} min · ${completedCount} ${completedCount === 1 ? 'exercise' : 'exercises'} done
+        ${isLegacy ? '<span style="font-size:11px;color:var(--text-muted);"> (legacy)</span>' : ''}
+      </div>
 
-      ${routine ? `
+      ${!isLegacy && completedIds.length > 0 ? `
         <div style="text-align:left;background:var(--bg-elev);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px;">
-          ${routine.steps.map((step, i) => {
-            const ex = routineStepExercise(step);
+          ${completedIds.map((id, i) => {
+            const ex = EXERCISES.find(e => e.id === id);
             if (!ex) return '';
-            const detail = step.duration ? `${step.duration}s` : `×${step.reps}`;
+            const step = MORNING_PROGRAM.steps.find(s => s.exerciseId === id);
+            const detail = step ? (step.duration ? `${step.duration}s` : `×${step.reps}`) : '';
             return `
-              <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;${i < routine.steps.length - 1 ? 'border-bottom:1px solid var(--border);' : ''}">
-                <span style="color:var(--text);">${i + 1}. ${ex.name}</span>
+              <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;${i < completedIds.length - 1 ? 'border-bottom:1px solid var(--border);' : ''}">
+                <span style="color:var(--text);">✓ ${ex.name}</span>
                 <span style="color:var(--text-muted);font-family:var(--font-mono);">${detail}</span>
               </div>
             `;
@@ -2246,10 +2242,17 @@ function openRoutineSummary(recordId) {
 
       <div style="display:flex;gap:8px;">
         <button class="btn btn-secondary" style="flex:1;" onclick="closeModal()">CLOSE</button>
-        <button class="btn btn-primary" style="flex:1;" onclick="shareRoutine(window._lastRoutineRecord)">SHARE</button>
+        ${completedCount > 0 ? `<button class="btn btn-primary" style="flex:1;" onclick="shareRoutine(window._lastRoutineRecord)">SHARE</button>` : ''}
       </div>
     </div>
   `);
+}
+
+// Share по id (для тапа на иконку Share прямо в Recent)
+function shareRoutineById(recordId) {
+  const record = (STATE.routines || []).find(r => r.id === recordId);
+  if (!record) return;
+  shareRoutine(record);
 }
 
 
@@ -3107,15 +3110,16 @@ async function shareRoutine(routineRecord) {
   try {
     const blob = await renderRoutineImage(routineRecord);
 
-    const routine = ROUTINES.find(r => r.id === routineRecord.programId);
+    const program = MORNING_PROGRAM;
     const dateStr = new Date(routineRecord.timestamp).toLocaleDateString('en-US', {
       day: 'numeric', month: 'long'
     });
     const min = Math.round(routineRecord.duration / 60);
     const minDisplay = min < 1 ? '<1' : min;
+    const completedCount = getCompletedCount(routineRecord);
     const streakLine = STATE.morningStreak > 1 ? `\n🔥 ${STATE.morningStreak} day streak` : '';
 
-    const text = `🌅 Morning routine ${dateStr}\n${routine ? routine.name : 'Routine'} — ${minDisplay} min${streakLine}\n\nvia FORGE`;
+    const text = `🌅 Morning routine ${dateStr}\n${completedCount}/${program.steps.length} exercises · ${minDisplay} min${streakLine}\n\nvia FORGE`;
     const file = new File([blob], `forge-routine-${dateStr}.png`, { type: 'image/png' });
 
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -3163,13 +3167,19 @@ async function shareRoutine(routineRecord) {
 
 // Рендер картинки зарядки (1080×1350) — без силуэта, без YouTube превью
 async function renderRoutineImage(record) {
-  const routine = ROUTINES.find(r => r.id === record.programId);
-  if (!routine) throw new Error('Routine not found');
-
+  const program = MORNING_PROGRAM;
   const W = 1080;
 
-  // Считаем нужную высоту динамически:
-  // header (logo+date) + центральный блок (icon+title+desc) + 3 stats + EXERCISES label + N карточек по 88 + footer-padding
+  // Берём только сделанные упражнения для отображения
+  const completedIds = getCompletedIds(record);
+  const isLegacy = !Array.isArray(record.completedExerciseIds);
+
+  // Для legacy записей (v2) показываем все упражнения программы (нет данных о том что сделано)
+  const stepsToShow = isLegacy
+    ? program.steps
+    : program.steps.filter(s => completedIds.includes(s.exerciseId));
+
+  // Считаем нужную высоту динамически
   const HEADER_H = 130;       // лого + дата
   const CENTRAL_H = 310;      // иконка + name + description
   const STATS_H = 165;        // 3 stat-карточки
@@ -3177,8 +3187,10 @@ async function renderRoutineImage(record) {
   const EXERCISE_CARD_H = 88;
   const FOOTER_H = 100;       // отступ снизу + надпись
 
-  const exerciseCount = routine.steps.length;
-  const H = HEADER_H + CENTRAL_H + STATS_H + EXERCISES_LABEL_H + exerciseCount * EXERCISE_CARD_H + FOOTER_H;
+  const exerciseCount = stepsToShow.length;
+  // Минимум одна карточка чтобы canvas не был странно коротким
+  const cardsCount = Math.max(exerciseCount, 1);
+  const H = HEADER_H + CENTRAL_H + STATS_H + EXERCISES_LABEL_H + cardsCount * EXERCISE_CARD_H + FOOTER_H;
 
   const canvas = document.createElement('canvas');
   canvas.width = W;
@@ -3242,7 +3254,7 @@ async function renderRoutineImage(record) {
   ctx.font = '120px "Apple Color Emoji", "Segoe UI Emoji", sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
-  ctx.fillText(routine.icon, W / 2, y);
+  ctx.fillText(program.icon, W / 2, y);
   y += 150;
 
   // Название программы + "MORNING ROUTINE"
@@ -3253,13 +3265,13 @@ async function renderRoutineImage(record) {
 
   ctx.fillStyle = COLORS.text;
   ctx.font = 'bold 80px -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif';
-  ctx.fillText(routine.name.toUpperCase(), W / 2, y);
+  ctx.fillText(program.name.toUpperCase(), W / 2, y);
   y += 100;
 
   // Description
   ctx.fillStyle = COLORS.textDim;
   ctx.font = '28px -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif';
-  ctx.fillText(routine.description, W / 2, y);
+  ctx.fillText(program.description, W / 2, y);
   y += 80;
 
   // Stats row: длительность, упражнений, стрик
@@ -3290,55 +3302,68 @@ async function renderRoutineImage(record) {
   };
 
   drawStat(0, 'Duration', minDisplay);
-  drawStat(1, 'Exercises', String(record.completedExercises));
+  drawStat(1, 'Exercises', `${getCompletedCount(record)}/${program.steps.length}`);
   if (STATE.morningStreak > 0) {
     drawStat(2, 'Streak', `🔥${STATE.morningStreak}`, COLORS.accent);
   }
 
   y = statsY + 165;
 
-  // Список упражнений
+  // Список сделанных упражнений
   ctx.fillStyle = COLORS.textMuted;
   ctx.font = '20px "SF Mono", Menlo, Monaco, monospace';
   ctx.textAlign = 'left';
-  ctx.fillText('EXERCISES', PAD, y);
+  ctx.fillText(isLegacy ? 'EXERCISES' : 'COMPLETED', PAD, y);
   y += 35;
 
-  routine.steps.forEach((step, i) => {
-    const ex = routineStepExercise(step);
-    if (!ex) return;
-
-    // Карточка упражнения
+  if (stepsToShow.length === 0) {
+    // На случай если запись пустая — рисуем placeholder
     ctx.fillStyle = COLORS.bgElev2;
     roundRect(ctx, PAD, y, W - PAD * 2, 80, 14);
     ctx.fill();
-
-    // Номер
-    ctx.fillStyle = COLORS.bgElev3;
-    roundRect(ctx, PAD + 16, y + 16, 48, 48, 10);
-    ctx.fill();
-    ctx.fillStyle = COLORS.accent;
-    ctx.font = 'bold 22px "SF Mono", Menlo, Monaco, monospace';
+    ctx.fillStyle = COLORS.textDim;
+    ctx.font = '24px -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(String(i + 1), PAD + 40, y + 40);
-
-    // Имя упражнения
-    ctx.fillStyle = COLORS.text;
-    ctx.font = 'bold 28px -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(ex.name, PAD + 80, y + 40);
-
-    // Detail (длительность или повторы) справа
-    const detail = step.duration ? `${step.duration}s` : `×${step.reps}`;
-    ctx.fillStyle = COLORS.textDim;
-    ctx.font = '24px "SF Mono", Menlo, Monaco, monospace';
-    ctx.textAlign = 'right';
-    ctx.fillText(detail, W - PAD - 24, y + 40);
-
+    ctx.fillText('No exercises completed', W / 2, y + 40);
     y += 88;
-  });
+  } else {
+    stepsToShow.forEach((step, i) => {
+      const ex = routineStepExercise(step);
+      if (!ex) return;
+
+      // Карточка упражнения
+      ctx.fillStyle = COLORS.bgElev2;
+      roundRect(ctx, PAD, y, W - PAD * 2, 80, 14);
+      ctx.fill();
+
+      // Номер
+      ctx.fillStyle = COLORS.bgElev3;
+      roundRect(ctx, PAD + 16, y + 16, 48, 48, 10);
+      ctx.fill();
+      ctx.fillStyle = COLORS.accent;
+      ctx.font = 'bold 22px "SF Mono", Menlo, Monaco, monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(String(i + 1), PAD + 40, y + 40);
+
+      // Имя упражнения
+      ctx.fillStyle = COLORS.text;
+      ctx.font = 'bold 28px -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(ex.name, PAD + 80, y + 40);
+
+      // Detail (длительность или повторы) справа
+      const detail = step.duration ? `${step.duration}s` : `×${step.reps}`;
+      ctx.fillStyle = COLORS.textDim;
+      ctx.font = '24px "SF Mono", Menlo, Monaco, monospace';
+      ctx.textAlign = 'right';
+      ctx.fillText(detail, W - PAD - 24, y + 40);
+
+      y += 88;
+    });
+  }
 
   // Footer
   ctx.fillStyle = COLORS.textMuted;
@@ -3894,7 +3919,7 @@ function exportData() {
     morningStreak: STATE.morningStreak || 0,
     morningLastDate: STATE.morningLastDate || null,
     exportedAt: new Date().toISOString(),
-    version: 2
+    version: 3
   }, null, 2);
   const blob = new Blob([data], { type: 'application/json' });
   const url = URL.createObjectURL(blob);

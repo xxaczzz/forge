@@ -1812,7 +1812,7 @@ function renderMorningHome() {
               <div style="display:flex;align-items:center;gap:8px;padding:10px 8px;border-bottom:1px solid var(--border);">
                 <button onclick="openRoutineSummary('${r.id}')" style="flex:1;display:flex;justify-content:space-between;align-items:center;background:transparent;border:none;font-size:13px;cursor:pointer;color:var(--text);font-family:inherit;text-align:left;padding:0;">
                   <span style="color:var(--text-dim);min-width:60px;">${date.toUpperCase()}</span>
-                  <span style="flex:1;text-align:center;">🌅 ${completedCount}/16</span>
+                  <span style="flex:1;text-align:center;">🌅 ${completedCount} ${completedCount === 1 ? 'ex' : 'ex'}</span>
                   <span style="color:var(--text-muted);font-family:var(--font-mono);">${minDisplay}</span>
                 </button>
                 <button onclick="event.stopPropagation();shareRoutineById('${r.id}')" aria-label="Share" style="background:transparent;border:none;cursor:pointer;padding:6px;color:var(--text-muted);display:flex;align-items:center;justify-content:center;">
@@ -3119,7 +3119,7 @@ async function shareRoutine(routineRecord) {
     const completedCount = getCompletedCount(routineRecord);
     const streakLine = STATE.morningStreak > 1 ? `\n🔥 ${STATE.morningStreak} day streak` : '';
 
-    const text = `🌅 Morning routine ${dateStr}\n${completedCount}/${program.steps.length} exercises · ${minDisplay} min${streakLine}\n\nvia FORGE`;
+    const text = `🌅 Morning routine ${dateStr}\n${completedCount} ${completedCount === 1 ? 'exercise' : 'exercises'} · ${minDisplay} min${streakLine}\n\nvia FORGE`;
     const file = new File([blob], `forge-routine-${dateStr}.png`, { type: 'image/png' });
 
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -3185,7 +3185,7 @@ async function renderRoutineImage(record) {
   const STATS_H = 165;        // 3 stat-карточки
   const EXERCISES_LABEL_H = 35;
   const EXERCISE_CARD_H = 88;
-  const FOOTER_H = 100;       // отступ снизу + надпись
+  const FOOTER_H = 130;       // отступ снизу + надпись (запас 60px после последней карточки)
 
   const exerciseCount = stepsToShow.length;
   // Минимум одна карточка чтобы canvas не был странно коротким
@@ -3302,7 +3302,7 @@ async function renderRoutineImage(record) {
   };
 
   drawStat(0, 'Duration', minDisplay);
-  drawStat(1, 'Exercises', `${getCompletedCount(record)}/${program.steps.length}`);
+  drawStat(1, 'Exercises', String(getCompletedCount(record)));
   if (STATE.morningStreak > 0) {
     drawStat(2, 'Streak', `🔥${STATE.morningStreak}`, COLORS.accent);
   }

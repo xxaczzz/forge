@@ -3166,7 +3166,20 @@ async function renderRoutineImage(record) {
   const routine = ROUTINES.find(r => r.id === record.programId);
   if (!routine) throw new Error('Routine not found');
 
-  const W = 1080, H = 1350;
+  const W = 1080;
+
+  // Считаем нужную высоту динамически:
+  // header (logo+date) + центральный блок (icon+title+desc) + 3 stats + EXERCISES label + N карточек по 88 + footer-padding
+  const HEADER_H = 130;       // лого + дата
+  const CENTRAL_H = 310;      // иконка + name + description
+  const STATS_H = 165;        // 3 stat-карточки
+  const EXERCISES_LABEL_H = 35;
+  const EXERCISE_CARD_H = 88;
+  const FOOTER_H = 100;       // отступ снизу + надпись
+
+  const exerciseCount = routine.steps.length;
+  const H = HEADER_H + CENTRAL_H + STATS_H + EXERCISES_LABEL_H + exerciseCount * EXERCISE_CARD_H + FOOTER_H;
+
   const canvas = document.createElement('canvas');
   canvas.width = W;
   canvas.height = H;
